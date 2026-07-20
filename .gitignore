@@ -1,0 +1,20 @@
+node_modules/
+.DS_Store
+dist/
+dist-ssr/
+*.local
+.env
+.env.*
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Exclude unnecessary downloaded folders
+/clerk.webild.io/
+/fonts.googleapis.com/
+/fonts.gstatic.com/
+/storage.googleapis.com/
+/unpkg.com/
+/webild-components-version-4.vercel.app/
+/www.googletagmanager.com/
+/www.webild.io/
