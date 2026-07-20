@@ -98,6 +98,7 @@ export default function Testimonials() {
                   src={t.avatar}
                   alt={t.author}
                   className="w-11 h-11 rounded-full object-cover ring-2 ring-[#C9A96E]/30"
+                  loading="lazy"
                 />
                 <div>
                   <div className="font-medium text-sm text-[#1C1917]">{t.author}</div>

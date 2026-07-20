@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { motion, useInView } from 'framer-motion';
@@ -15,6 +15,17 @@ const marqueeItems = [
 export default function MarqueeAndCta() {
   const bannerRef = useRef<HTMLDivElement>(null);
   const inView = useInView(bannerRef, { once: true, margin: '-100px' });
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) {
+      setSubscribed(true);
+      setEmail('');
+      setTimeout(() => setSubscribed(false), 3000);
+    }
+  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -34,7 +45,6 @@ export default function MarqueeAndCta() {
 
   return (
     <>
-      {/* Marquee strip */}
       <div className="bg-[#3A1510] py-4 overflow-hidden">
         <div className="marquee-track inline-flex whitespace-nowrap gap-8">
           {[...marqueeItems, ...marqueeItems].map((item, i) => (
@@ -46,19 +56,16 @@ export default function MarqueeAndCta() {
         </div>
       </div>
 
-      {/* CTA / Newsletter */}
       <section
         id="contact"
         ref={bannerRef}
         className="bg-[#EDE7DC] py-24 md:py-32 relative overflow-hidden"
       >
-        {/* Decorative element */}
         <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-[#3A1510]/8 pointer-events-none" />
         <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-[#3A1510]/8 pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-6 md:px-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Left text */}
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               animate={inView ? { opacity: 1, x: 0 } : {}}
@@ -75,21 +82,27 @@ export default function MarqueeAndCta() {
                 Join over 150,000 fragrance lovers who receive early access to new launches,
                 exclusive offers, and expert perfumery insights.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="email"
-                  placeholder="Your email address"
-                  className="flex-1 bg-white/70 border border-[#3A1510]/15 rounded-full px-5 py-3.5 text-sm text-[#1C1917] placeholder:text-[#6B5B52]/60 focus:outline-none focus:border-[#3A1510]/40 transition-colors"
-                />
-                <button className="group flex items-center gap-2 bg-[#3A1510] text-[#F7F3EE] font-medium px-6 py-3.5 rounded-full hover:bg-[#5C2318] transition-colors duration-300 shrink-0">
-                  Subscribe
-                  <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
+              {subscribed ? (
+                <p className="text-[#3A1510] font-medium">Thank you for subscribing!</p>
+              ) : (
+                <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Your email address"
+                    required
+                    className="flex-1 bg-white/70 border border-[#3A1510]/15 rounded-full px-5 py-3.5 text-sm text-[#1C1917] placeholder:text-[#6B5B52]/60 focus:outline-none focus:border-[#3A1510]/40 transition-colors"
+                  />
+                  <button type="submit" className="group flex items-center gap-2 bg-[#3A1510] text-[#F7F3EE] font-medium px-6 py-3.5 rounded-full hover:bg-[#5C2318] transition-colors duration-300 shrink-0">
+                    Subscribe
+                    <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </form>
+              )}
               <p className="text-xs text-[#6B5B52]/70 mt-3">No spam. Unsubscribe anytime.</p>
             </motion.div>
 
-            {/* Right visual */}
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               animate={inView ? { opacity: 1, x: 0 } : {}}
@@ -101,11 +114,11 @@ export default function MarqueeAndCta() {
                   src="https://images.unsplash.com/photo-1601628828688-632f38a5a7d0?w=700&q=80"
                   alt="Perfume atmosphere"
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#3A1510]/40 to-transparent" />
               </div>
 
-              {/* Floating stat card */}
               <motion.div
                 animate={{ y: [0, -8, 0] }}
                 transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
@@ -115,7 +128,6 @@ export default function MarqueeAndCta() {
                 <div className="text-[#6B5B52] text-xs mt-1">Happy Community Members</div>
               </motion.div>
 
-              {/* Floating award card */}
               <motion.div
                 animate={{ y: [0, 8, 0] }}
                 transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut', delay: 0.5 }}

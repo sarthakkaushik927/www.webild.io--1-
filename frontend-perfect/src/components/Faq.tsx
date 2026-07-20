@@ -1,106 +1,92 @@
-import { useRef, useState } from 'react';
-import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 
-const faqs = [
+const faqItems = [
   {
     q: 'What makes UMBRA fragrances different from other luxury brands?',
-    a: 'UMBRA combines rare natural essences with master perfumery techniques. Every composition is developed over months of refinement to deliver extraordinary depth and longevity.',
+    a: 'Our fragrances are composed using rare, sustainably sourced essences and crafted by master perfumers with decades of experience. Each scent is designed to evolve uniquely on your skin.',
   },
   {
     q: 'How long does the fragrance last on skin?',
-    a: 'Most of our Eau de Parfums last 8–12 hours on skin. Our Parfum concentrations can last up to 16 hours. For best results, apply to pulse points.',
+    a: 'Our Eau de Parfum concentrations are formulated to last 8–12 hours on skin, with sillage projecting beautifully for the first 4–6 hours. Warmer skin typically extends the longevity.',
   },
   {
     q: 'Are your fragrances suitable for sensitive skin?',
-    a: 'Our perfumes are formulated with high-quality, dermatologically considered ingredients. They are free from common irritants and suitable for most skin types.',
+    a: 'Yes. All UMBRA fragrances are formulated with gentle, high-quality ingredients and are free from parabens and harmful sulfates. We recommend a patch test if you have particularly sensitive skin.',
   },
   {
     q: 'Do you offer a satisfaction guarantee?',
-    a: "We're confident in our compositions. If a fragrance doesn't feel right within 14 days of purchase, we offer a full refund — no questions asked.",
+    a: 'Yes. We offer a 30-day satisfaction guarantee. If you are not completely satisfied with your purchase, please contact us for a full refund or exchange.',
   },
   {
     q: 'Are your ingredients natural or synthetic?',
-    a: 'We blend premium natural essences — oud, jasmine, rose — with refined aroma molecules for stability and projection.',
+    a: 'We use a harmonious blend of natural extracts and safe synthetic molecules to ensure consistency, performance, and ethical sourcing. All ingredients comply with IFRA standards.',
   },
   {
     q: 'How do I choose the right fragrance for me?',
-    a: 'Start with our Discovery Set to explore all four scents. Wear each for a full day to find your match.',
+    a: 'We recommend exploring our Discovery Set or visiting our store for a personalized consultation. Our team can help you find a scent that matches your personality and lifestyle.',
   },
 ];
 
 export default function Faq() {
-  const ref    = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-100px' });
-  const [open, setOpen] = useState<number | null>(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const toggle = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
 
   return (
-    <section id="faq" data-section="faq" ref={ref} className="bg-[#EDE7DC] py-24 md:py-32">
-      <div className="max-w-7xl mx-auto px-6 md:px-10">
-
-        <div className="grid lg:grid-cols-2 gap-16 items-start">
-          {/* Left: sticky image + header */}
-          <div className="lg:sticky lg:top-28">
-            <motion.div initial={{ opacity: 0, x: -30 }} animate={inView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.7 }} className="mb-8">
-              <div className="inline-flex items-center gap-2 mb-4">
-                <div className="w-8 h-px bg-[#3A1510]" />
-                <span className="text-xs font-medium tracking-widest text-[#3A1510] uppercase">Support</span>
-              </div>
-              <h2 className="font-serif text-4xl md:text-5xl font-bold text-[#1C1917] mb-4">
-                Frequently Asked Questions
-              </h2>
-              <p className="text-[#6B5B52] text-sm leading-relaxed max-w-sm">
-                Everything you need to know about our luxury fragrances, ingredients, and satisfaction guarantee.
-              </p>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={inView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ delay: 0.2, duration: 0.7 }}
-              className="rounded-3xl overflow-hidden h-72 md:h-80 shadow-xl shadow-[#3A1510]/15">
-              <img src="/assets/faq-image.webp" alt="UMBRA fragrance"
-                className="w-full h-full object-cover" />
-            </motion.div>
+    <>
+      <section aria-label="FAQ section" className="py-20">
+        <div className="w-content-width mx-auto flex flex-col gap-8 md:gap-10">
+          <div className="flex flex-col items-center gap-2">
+            <div className="px-3 py-1 mb-1 text-sm card rounded w-fit">
+              <p>Support</p>
+            </div>
+            <h2
+              className="bg-gradient-to-r from-foreground to-primary-cta bg-clip-text text-transparent pb-[0.1em] -mb-[0.1em] md:max-w-8/10 text-6xl 2xl:text-7xl leading-[1.15] font-semibold text-center text-balance">
+              Frequently Asked Questions</h2>
+            <p className="md:max-w-7/10 text-lg md:text-xl leading-snug text-center text-balance">Everything you need to
+              know about our luxury fragrances, ingredients, and satisfaction guarantee.</p>
           </div>
-
-          {/* Right: accordion */}
-          <div className="space-y-0">
-            {faqs.map((item, i) => (
-              <motion.div key={i}
-                initial={{ opacity: 0, y: 20 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: i * 0.06, duration: 0.5 }}
-                className="border-b border-[#3A1510]/10">
-                <button
-                  onClick={() => setOpen(open === i ? null : i)}
-                  className="w-full text-left py-5 flex items-center justify-between gap-4 group">
-                  <span className="font-medium text-[#1C1917] text-base group-hover:text-[#3A1510] transition-colors pr-4">
-                    {item.q}
-                  </span>
-                  <motion.span
-                    animate={{ rotate: open === i ? 45 : 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="flex-shrink-0 w-7 h-7 rounded-full bg-[#3A1510]/10 flex items-center justify-center text-[#3A1510] font-light text-xl leading-none">
-                    +
-                  </motion.span>
-                </button>
-                <AnimatePresence initial={false}>
-                  {open === i && (
-                    <motion.div
-                      key="content"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-                      className="overflow-hidden">
-                      <p className="pb-5 text-[#6B5B52] text-sm leading-relaxed">{item.a}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
+            <div className="card relative md:col-span-2 h-80 md:h-auto rounded overflow-hidden"
+              style={{"opacity": "1", "transform": "none", }}><img
+                alt="https://storage.googleapis.com/webild/default/templates/skincare-luxury/faq-image.webp"
+                className="min-h-0 rounded absolute inset-0 size-full object-cover"
+                src="https://storage.googleapis.com/webild/default/templates/skincare-luxury/faq-image.webp" loading="lazy" /></div>
+            <div className="md:col-span-3 flex flex-col gap-3 xl:gap-3.5 2xl:gap-4" style={{"opacity": "1", "transform": "none", }}>
+              {faqItems.map((item, index) => (
+                <div key={index} className="border border-black/5 rounded overflow-hidden">
+                  <button
+                    onClick={() => toggle(index)}
+                    className="w-full text-left p-3 xl:p-3.5 2xl:p-4 rounded flex items-center justify-between gap-3 xl:gap-3.5 2xl:gap-4 cursor-pointer"
+                  >
+                    <h3 className="text-lg md:text-xl font-medium leading-snug">{item.q}</h3>
+                    <div className="flex shrink-0 items-center justify-center size-8 md:size-9 rounded primary-button">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                        className="lucide lucide-plus size-3.5 md:size-4 text-primary-cta-text transition-transform duration-300"
+                        style={{ transform: openIndex === index ? 'rotate(45deg)' : 'rotate(0deg)' }}
+                        aria-hidden={true}>
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5v14"></path>
+                      </svg>
+                    </div>
+                  </button>
+                  <div
+                    className="overflow-hidden transition-all duration-300 ease-in-out"
+                    style={{ maxHeight: openIndex === index ? '500px' : '0px', opacity: openIndex === index ? 1 : 0 }}
+                  >
+                    <p className="px-3 xl:px-3.5 2xl:px-4 pb-3 xl:pb-3.5 2xl:pb-4 text-gray-600 text-base leading-relaxed">
+                      {item.a}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

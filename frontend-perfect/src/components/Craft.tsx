@@ -1,130 +1,107 @@
-import { useEffect, useRef, useState } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { motion, useInView } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { apiGet } from '../utils/api';
 
-gsap.registerPlugin(ScrollTrigger);
+export interface CraftStep {
+  title: string;
+  description: string;
+  imageUrl: string;
+}
 
-const steps = [
-  {
-    number: '01',
-    title: 'Rare Ingredient Sourcing',
-    body: 'We source precious essences from sustainable fields worldwide — Grasse rose, Madagascan vanilla, and Italian bergamot at their peak.',
-    img: '/assets/features/feature-1.webp',
-    tag: 'Sustainability',
-  },
-  {
-    number: '02',
-    title: 'Master Perfumers',
-    body: 'Every composition is crafted by world-renowned noses who balance top, heart, and base notes into unforgettable olfactory journeys.',
-    img: '/assets/features/feature-2.webp',
-    tag: 'Expertise',
-  },
-  {
-    number: '03',
-    title: 'Lasting Sillage',
-    body: 'Our concentrated formulas are designed for exceptional longevity — a single application carries you beautifully from dawn to dusk.',
-    img: '/assets/features/feature-3.webp',
-    tag: 'Excellence',
-  },
-];
+export interface CraftData {
+  title: string;
+  subtitle: string;
+  steps: CraftStep[];
+}
+
+const defaultCraft: CraftData = {
+  title: "The Art Behind Our Fragrances",
+  subtitle: "Each perfume is meticulously composed with rare essences and noble raw materials to create scents that captivate and endure.",
+  steps: [
+    {
+      title: "Rare Ingredient Sourcing",
+      description: "We source precious essences from sustainable fields worldwide — Grasse rose, Madagascan vanilla, and Italian bergamot at their peak.",
+      imageUrl: "https://storage.googleapis.com/webild/default/templates/skincare-luxury/features/feature-1.webp"
+    },
+    {
+      title: "Master Perfumers",
+      description: "Every composition is crafted by world-renowned noses who balance top, heart, and base notes into unforgettable olfactory journeys.",
+      imageUrl: "https://storage.googleapis.com/webild/default/templates/skincare-luxury/features/feature-2.webp"
+    },
+    {
+      title: "Lasting Sillage",
+      description: "Our concentrated formulas are designed for exceptional longevity — a single application carries you beautifully from dawn to dusk.",
+      imageUrl: "https://storage.googleapis.com/webild/default/templates/skincare-luxury/features/feature-3.webp"
+    }
+  ]
+};
 
 export default function Craft() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const titleRef   = useRef<HTMLDivElement>(null);
-  const [activeStep, setActiveStep] = useState(0);
-  const inView = useInView(titleRef, { once: true, margin: '-80px' });
+  const [craftData, setCraftData] = useState<CraftData>(defaultCraft);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.utils.toArray<HTMLElement>('.craft-panel').forEach((panel, i) => {
-        ScrollTrigger.create({
-          trigger: panel,
-          start: 'top 55%',
-          end:   'bottom 45%',
-          onEnter:     () => setActiveStep(i),
-          onEnterBack: () => setActiveStep(i),
-        });
+    apiGet<CraftData>('/api/craft')
+      .then(data => {
+        if (data && data.title) {
+          setCraftData({
+            title: data.title || defaultCraft.title,
+            subtitle: data.subtitle || defaultCraft.subtitle,
+            steps: data.steps && data.steps.length > 0 ? data.steps : defaultCraft.steps
+          });
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
       });
-    }, sectionRef);
-    return () => ctx.revert();
   }, []);
 
+  if (loading) return null;
+
   return (
-    <section id="features" data-section="features" ref={sectionRef} className="bg-[#EDE7DC] py-24 md:py-32">
-      <div className="max-w-7xl mx-auto px-6 md:px-10">
-
-        <div ref={titleRef} className="mb-20">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.7 }}>
-            <div className="inline-flex items-center gap-2 mb-4">
-              <div className="w-8 h-px bg-[#3A1510]" />
-              <span className="text-xs font-medium tracking-widest text-[#3A1510] uppercase">Perfumery Craft</span>
+    <>
+      <section aria-label="Features section" className="py-20">
+        <div className="flex flex-col gap-8 md:gap-10">
+          <div className="flex flex-col items-center w-content-width mx-auto gap-2">
+            <div className="px-3 py-1 mb-1 text-sm card rounded w-fit">
+              <p>Perfumery Craft</p>
             </div>
-            <div className="flex flex-col md:flex-row md:items-end gap-6 justify-between">
-              <h2 className="font-serif text-4xl md:text-5xl xl:text-6xl font-bold text-[#1C1917] max-w-md">
-                The Art Behind Our Fragrances
-              </h2>
-              <p className="text-[#6B5B52] max-w-xs text-sm leading-relaxed">
-                Each perfume is meticulously composed with rare essences and noble raw
-                materials to create scents that captivate and endure.
-              </p>
-            </div>
-          </motion.div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
-          {/* Sticky image */}
-          <div className="lg:w-1/2">
-            <div className="sticky top-28">
-              <div className="relative rounded-3xl overflow-hidden h-[500px] lg:h-[600px] shadow-2xl shadow-[#3A1510]/20">
-                {steps.map((step, i) => (
-                  <motion.div key={i} className="absolute inset-0"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: activeStep === i ? 1 : 0 }}
-                    transition={{ duration: 0.5, ease: 'easeInOut' }}>
-                    <img src={step.img} alt={step.title} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#3A1510]/70 via-transparent to-transparent" />
-                    <div className="absolute bottom-8 left-8 right-8">
-                      <span className="text-[#C9A96E] text-xs tracking-widest uppercase font-medium">{step.tag}</span>
-                      <div className="text-[#F7F3EE] font-serif text-2xl font-semibold mt-1">{step.title}</div>
-                    </div>
-                  </motion.div>
-                ))}
-                {/* Progress dots */}
-                <div className="absolute top-6 right-6 flex flex-col gap-2">
-                  {steps.map((_, i) => (
-                    <div key={i}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${activeStep === i ? 'bg-[#C9A96E] scale-125' : 'bg-white/40'}`} />
-                  ))}
-                </div>
-              </div>
-            </div>
+            <h2 className="bg-gradient-to-r from-foreground to-primary-cta bg-clip-text text-transparent pb-[0.1em] -mb-[0.1em] md:max-w-8/10 text-6xl 2xl:text-7xl leading-[1.15] font-semibold text-center text-balance">
+              {craftData.title}
+            </h2>
+            <p className="md:max-w-7/10 text-lg md:text-xl leading-snug text-center text-balance">
+              {craftData.subtitle}
+            </p>
           </div>
-
-          {/* Scrollable steps */}
-          <div className="lg:w-1/2">
-            {steps.map((step, i) => (
-              <div key={i} className="craft-panel py-16 border-b border-[#3A1510]/10 last:border-0">
-                <motion.div initial={{ opacity: 0, x: 30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: '-100px' }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}>
-                  <div className="flex items-start gap-6">
-                    <span className="font-serif text-6xl font-bold text-[#3A1510]/12 leading-none mt-2 select-none">
-                      {step.number}
-                    </span>
-                    <div>
-                      <h3 className="font-serif text-2xl md:text-3xl font-bold text-[#1C1917] mb-4">{step.title}</h3>
-                      <p className="text-[#6B5B52] leading-relaxed text-base">{step.body}</p>
-                    </div>
+          
+          <div className="flex flex-col gap-5 md:gap-[6vh] w-content-width mx-auto">
+            {craftData.steps.map((step, index) => (
+              <div
+                key={index}
+                className={`sticky top-[25vw] md:top-[12.5vh] h-[140vw] md:h-[75vh] flex flex-col gap-6 md:gap-10 p-6 md:p-10 card rounded ${index % 2 !== 0 ? 'md:flex-row-reverse' : 'md:flex-row'}`}
+                style={{"willChange": "opacity", "opacity": "1"}}
+              >
+                <div className="flex flex-col justify-center w-full md:w-1/2 gap-2">
+                  <div className="flex items-center justify-center size-9 mb-1 text-sm rounded primary-button text-primary-cta-text">
+                    <p>{index + 1}</p>
                   </div>
-                </motion.div>
+                  <h3 className="text-4xl md:text-5xl font-semibold leading-[1.15] text-balance">{step.title}</h3>
+                  <p className="text-base md:text-lg leading-snug text-balance">{step.description}</p>
+                </div>
+                <div className="w-full md:w-1/2 aspect-square rounded overflow-hidden">
+                  <img
+                    alt={step.title}
+                    className="w-full h-full min-h-0 object-cover rounded"
+                    src={step.imageUrl || `https://storage.googleapis.com/webild/default/templates/skincare-luxury/features/feature-${index+1}.webp`}
+                    loading="lazy"
+                  />
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

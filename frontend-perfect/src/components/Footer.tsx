@@ -1,96 +1,97 @@
-import { useEffect } from 'react';
-import { gsap } from 'gsap';
-
-const marqueeWords = [
-  'RARE ESSENCES', 'HAND CRAFTED', 'SUSTAINABLE', 'PARABEN FREE',
-  'VEGAN', 'AWARD WINNING', 'RARE ESSENCES', 'HAND CRAFTED',
-  'SUSTAINABLE', 'PARABEN FREE', 'VEGAN', 'AWARD WINNING',
-];
-
-const footerLinks = [
-  { label: 'Shop',           href: '#products'    },
-  { label: 'Our Craft',      href: '#features'    },
-  { label: 'Our Story',      href: '#'            },
-  { label: 'Sustainability', href: '#'            },
-  { label: 'Community',      href: '#influencers' },
-  { label: 'Customer Care',  href: '#'            },
-  { label: 'Contact',        href: '#contact'     },
-  { label: 'FAQ',            href: '#faq'         },
-  { label: 'Privacy Policy', href: '#'            },
-  { label: 'Terms',          href: '#'            },
-  { label: 'Returns',        href: '#'            },
-];
-
 export default function Footer() {
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Infinite marquee via GSAP (no CSS animation — cleaner control)
-      gsap.to('.marquee-inner', {
-        xPercent: -50,
-        duration: 22,
-        ease: 'none',
-        repeat: -1,
-      });
-    });
-    return () => ctx.revert();
-  }, []);
-
   return (
     <>
-      {/* Marquee strip */}
-      <div className="bg-[#3A1510] py-4 overflow-hidden">
-        <div className="marquee-inner inline-flex whitespace-nowrap">
-          {[...marqueeWords, ...marqueeWords].map((word, i) => (
-            <span key={i} className="inline-flex items-center gap-6 px-6 text-[#C9A96E] text-sm font-medium tracking-[0.2em] uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C9A96E] flex-shrink-0" />
-              {word}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-[#1C1917] text-[#F7F3EE] pt-16 pb-8">
-        <div className="max-w-7xl mx-auto px-6 md:px-10">
-
-          {/* Top row */}
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-10 pb-12 border-b border-[#F7F3EE]/10">
-            {/* Brand */}
-            <div className="md:w-1/3">
-              <div className="text-3xl font-serif font-bold tracking-[0.3em] mb-4 text-[#F7F3EE]">UMBRA</div>
-              <p className="text-[#F7F3EE]/50 text-sm leading-relaxed max-w-xs">
-                Luxury fragrances crafted with rare botanicals and master perfumery. Find your signature scent.
-              </p>
-              {/* Social */}
-              <div className="flex gap-4 mt-6">
-                {['Instagram', 'Twitter', 'Pinterest'].map((s) => (
-                  <a key={s} href="#"
-                    className="text-[#F7F3EE]/40 text-xs hover:text-[#C9A96E] transition-colors tracking-widest uppercase">
-                    {s}
-                  </a>
-                ))}
+      <footer data-section="footer" aria-label="Site footer"
+        className="w-full py-15 mt-20 rounded-t-lg overflow-hidden primary-button text-primary-cta-text">
+        <div className="w-content-width mx-auto flex flex-col gap-10 md:gap-20">
+          <div className="w-full min-w-0 flex-1 py-10">
+            <h2 className="whitespace-nowrap transition-opacity duration-150 opacity-100 font-semibold"
+              style={{ "lineHeight": "0.8", "fontSize": "304.311px" }}>UMBRA</h2>
+          </div>
+          <div className="flex flex-col gap-8 mb-10 md:flex-row md:justify-between">
+            <div className="flex flex-col items-start gap-3">
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">Shop</button>
+              </div>
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">Our Craft</button>
+              </div>
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">Why UMBRA</button>
               </div>
             </div>
-
-            {/* Links grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-3 md:w-2/3">
-              {footerLinks.map((link) => (
-                <a key={link.label} href={link.href}
-                  className="text-[#F7F3EE]/50 text-sm hover:text-[#C9A96E] transition-colors">
-                  {link.label}
-                </a>
-              ))}
+            <div className="flex flex-col items-start gap-3">
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">Our Story</button>
+              </div>
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">Sustainability</button>
+              </div>
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">Community</button>
+              </div>
+            </div>
+            <div className="flex flex-col items-start gap-3">
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">Customer Care</button>
+              </div>
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">Contact</button>
+              </div>
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">FAQ</button>
+              </div>
+            </div>
+            <div className="flex flex-col items-start gap-3">
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">Privacy Policy</button>
+              </div>
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">Terms &amp; Conditions</button>
+              </div>
+              <div className="flex items-center gap-2 text-base">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4" aria-hidden={true}>
+                  <path d="m9 18 6-6-6-6"></path>
+                </svg>
+                <button className="text-base text-primary-cta-text font-semibold hover:opacity-75 transition-opacity cursor-pointer">Return Policy</button>
+              </div>
             </div>
           </div>
-
-          {/* Bottom row */}
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-[#F7F3EE]/30 text-xs">
-              © {new Date().getFullYear()} UMBRA. All rights reserved.
-            </p>
-            <p className="text-[#F7F3EE]/20 text-xs">
-              Designed with Webild
-            </p>
+          <div className="w-content-width mx-auto flex justify-end pb-4 pr-4">
+            <a href="/admin" className="text-xs opacity-30 hover:opacity-100 transition-opacity">Admin Access</a>
           </div>
         </div>
       </footer>
