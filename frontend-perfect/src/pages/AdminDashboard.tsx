@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const [productDesc, setProductDesc] = useState('');
   const [productImage, setProductImage] = useState<File | null>(null);
 
-  // Hero
+  // Carousel
   const [carouselImages, setCarouselImages] = useState<string[]>([]);
   const [carouselLoading, setCarouselLoading] = useState(false);
 
@@ -54,19 +54,6 @@ export default function AdminDashboard() {
     try {
       const data = await apiGet<Product[]>('/api/products');
       setProducts(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchHero = async () => {
-    try {
-      const data = await apiGet<{ title: string; subtitle: string; images?: string[] }>('/api/hero');
-      if (data) {
-        setHeroTitle(data.title || '');
-        setHeroSubtitle(data.subtitle || '');
-        setHeroImages(Array.isArray(data.images) ? data.images : []);
-      }
     } catch (err) {
       console.error(err);
     }
@@ -120,7 +107,6 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchProducts();
-    fetchHero();
     fetchCarousel();
     fetchCraft();
     fetchCommunity();
@@ -187,30 +173,6 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Hero
-  const handleUpdateHero = async (e: FormEvent) => {
-    e.preventDefault();
-    setHeroLoading(true);
-    try {
-      await apiPutAuth('/api/hero', { title: heroTitle, subtitle: heroSubtitle, images: heroImages }, ADMIN_TOKEN);
-      alert("Hero updated!");
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update hero");
-    } finally {
-      setHeroLoading(false);
-    }
-  };
-
-  const addHeroImage = () => {
-    const url = prompt("Enter image URL:");
-    if (url) setHeroImages([...heroImages, url]);
-  };
-
-  const removeHeroImage = (index: number) => {
-    setHeroImages(heroImages.filter((_, i) => i !== index));
   };
 
   // Carousel
