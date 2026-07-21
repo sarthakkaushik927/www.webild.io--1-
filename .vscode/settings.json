@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^Set-Location 'd:\\\\downloads\\\\www\\.webild\\.io \\(1\\)\\\\frontend-perfect'; pnpm install$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

@@ -10,62 +10,62 @@ export interface CraftStep {
 export interface CraftData {
   title: string;
   subtitle: string;
+  faqImage?: string;
   steps: CraftStep[];
 }
 
 const defaultCraft: CraftData = {
-  title: "The Art Behind Our Fragrances",
-  subtitle: "Each perfume is meticulously composed with rare essences and noble raw materials to create scents that captivate and endure.",
+  title: "Health & Happiness with Kruxnut 🌿",
+  subtitle: "At Kruxnut, we believe snacking should be smart, satisfying, and full of life. Our philosophy blends nutrition, taste, and care for nature — creating a better world, one snack at a time.",
   steps: [
     {
-      title: "Rare Ingredient Sourcing",
-      description: "We source precious essences from sustainable fields worldwide — Grasse rose, Madagascan vanilla, and Italian bergamot at their peak.",
+      title: "Power of Protein",
+      description: "Every bite gives you natural plant-based strength to keep you active all day long.",
       imageUrl: "https://storage.googleapis.com/webild/default/templates/skincare-luxury/features/feature-1.webp"
     },
     {
-      title: "Master Perfumers",
-      description: "Every composition is crafted by world-renowned noses who balance top, heart, and base notes into unforgettable olfactory journeys.",
+      title: "Pure Ingredients",
+      description: "We choose only the finest natural ingredients — no palm oil, no chemicals, no compromise.",
       imageUrl: "https://storage.googleapis.com/webild/default/templates/skincare-luxury/features/feature-2.webp"
     },
     {
-      title: "Lasting Sillage",
-      description: "Our concentrated formulas are designed for exceptional longevity — a single application carries you beautifully from dawn to dusk.",
+      title: "Eco Friendly",
+      description: "From packaging to production — sustainability is at the heart of every Kruxnut creation.",
       imageUrl: "https://storage.googleapis.com/webild/default/templates/skincare-luxury/features/feature-3.webp"
+    },
+    {
+      title: "Energy & Joy",
+      description: "Healthy snacking that fuels your day — bringing happiness with every handful.",
+      imageUrl: "https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-2.webp"
     }
   ]
 };
 
 export default function Craft() {
   const [craftData, setCraftData] = useState<CraftData>(defaultCraft);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiGet<CraftData>('/api/craft')
+      apiGet<CraftData>('/api/craft')
       .then(data => {
         if (data && data.title) {
           setCraftData({
             title: data.title || defaultCraft.title,
             subtitle: data.subtitle || defaultCraft.subtitle,
+            faqImage: data.faqImage || defaultCraft.faqImage,
             steps: data.steps && data.steps.length > 0 ? data.steps : defaultCraft.steps
           });
         }
-        setLoading(false);
       })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+      .catch(console.error);
   }, []);
-
-  if (loading) return null;
 
   return (
     <>
-      <section aria-label="Features section" className="py-20">
+      <section id="features" aria-label="Features section" className="py-20">
         <div className="flex flex-col gap-8 md:gap-10">
           <div className="flex flex-col items-center w-content-width mx-auto gap-2">
             <div className="px-3 py-1 mb-1 text-sm card rounded w-fit">
-              <p>Perfumery Craft</p>
+              <p>Why Choose Us</p>
             </div>
             <h2 className="bg-gradient-to-r from-foreground to-primary-cta bg-clip-text text-transparent pb-[0.1em] -mb-[0.1em] md:max-w-8/10 text-6xl 2xl:text-7xl leading-[1.15] font-semibold text-center text-balance">
               {craftData.title}
@@ -74,13 +74,13 @@ export default function Craft() {
               {craftData.subtitle}
             </p>
           </div>
-          
+
           <div className="flex flex-col gap-5 md:gap-[6vh] w-content-width mx-auto">
             {craftData.steps.map((step, index) => (
               <div
                 key={index}
                 className={`sticky top-[25vw] md:top-[12.5vh] h-[140vw] md:h-[75vh] flex flex-col gap-6 md:gap-10 p-6 md:p-10 card rounded ${index % 2 !== 0 ? 'md:flex-row-reverse' : 'md:flex-row'}`}
-                style={{"willChange": "opacity", "opacity": "1"}}
+                style={{ "willChange": "opacity", "opacity": "1" }}
               >
                 <div className="flex flex-col justify-center w-full md:w-1/2 gap-2">
                   <div className="flex items-center justify-center size-9 mb-1 text-sm rounded primary-button text-primary-cta-text">
@@ -93,7 +93,7 @@ export default function Craft() {
                   <img
                     alt={step.title}
                     className="w-full h-full min-h-0 object-cover rounded"
-                    src={step.imageUrl || `https://storage.googleapis.com/webild/default/templates/skincare-luxury/features/feature-${index+1}.webp`}
+                    src={step.imageUrl || `https://storage.googleapis.com/webild/default/templates/skincare-luxury/features/feature-${index + 1}.webp`}
                     loading="lazy"
                   />
                 </div>

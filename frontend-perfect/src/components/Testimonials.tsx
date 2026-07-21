@@ -4,47 +4,47 @@ import { Star } from 'lucide-react';
 
 const testimonials = [
   {
-    quote: '"I received so many compliments the first time I wore Aura. It\'s warm, feminine, and unmistakably mine. I\'ve never felt so confident."',
-    author: 'Sophia Laurent',
-    role: 'Fashion Editor, Paris',
+    quote: '"These makhanas are so addictive! Perfectly roasted with just the right amount of crunch. My whole family loves snacking on them."',
+    author: 'Priya Sharma',
+    role: 'Fitness Enthusiast, Delhi',
     rating: 5,
-    scent: 'Aura EDP',
+    scent: 'Makhana Fan',
     avatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=200&q=80',
   },
   {
-    quote: '"Noir Absolu is everything — dark, captivating, and utterly mysterious. It stays with you hours after you\'ve left the room. Absolutely worth every penny."',
-    author: 'Marcus Chen',
-    role: 'Art Curator, New York',
+    quote: '"Finally a brand that offers truly healthy snacks without compromising on taste. The peri peri cashews are absolutely incredible!"',
+    author: 'Rahul Verma',
+    role: 'Nutritionist, Mumbai',
     rating: 5,
-    scent: 'Noir Absolu',
+    scent: 'Cashew Lover',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
   },
   {
-    quote: '"I\'ve tried dozens of niche fragrances. Solum is the only one that felt like coming home. Earthy, real, and profoundly comforting."',
-    author: 'Elena Rossi',
-    role: 'Interior Designer, Milan',
+    quote: '"I replaced all my junk food with Kruxnut products. The banana chips are so fresh and the packaging keeps everything crunchy for weeks!"',
+    author: 'Anita Patel',
+    role: 'Health Blogger, Agra',
     rating: 5,
-    scent: 'Solum EDP',
+    scent: 'Banana Chips',
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80',
   },
 ];
 
 const faqItems = [
   {
-    q: 'How long does the fragrance last on skin?',
-    a: 'Our Eau de Parfum concentrations are formulated to last 8–12 hours on skin, with sillage projecting beautifully for the first 4–6 hours. Warmer skin typically extends the longevity.',
+    q: 'How long do your products stay fresh?',
+    a: 'Our premium packaging ensures freshness for up to 6 months. Once opened, we recommend consuming within 30 days for the best crunch and flavor.',
   },
   {
-    q: 'Are your fragrances vegan and cruelty-free?',
-    a: 'Yes. All UMBRA fragrances are 100% vegan and cruelty-free. We never test on animals and all our natural ingredients are ethically and sustainably sourced.',
+    q: 'Are your products 100% natural?',
+    a: 'Yes. All Kruxnut snacks are made with 100% natural ingredients. No artificial flavors, no preservatives, and absolutely no palm oil.',
   },
   {
-    q: 'Do you offer samples before I commit to a full bottle?',
-    a: 'Absolutely. We offer a Discovery Set featuring 2ml decants of all 12 fragrances so you can find your signature before purchasing a full bottle.',
+    q: 'Can I try different flavors before ordering in bulk?',
+    a: 'Absolutely. We offer a variety pack featuring our best sellers so you can discover your favorites before committing to a larger order.',
   },
   {
     q: 'What is your return policy?',
-    a: 'We accept returns within 30 days of purchase for any unopened product. For opened bottles, we offer store credit. Customer satisfaction is our top priority.',
+    a: 'We accept returns within 7 days of delivery for any unopened product. For quality issues, we offer full replacement. Customer satisfaction is our top priority.',
   },
 ];
 

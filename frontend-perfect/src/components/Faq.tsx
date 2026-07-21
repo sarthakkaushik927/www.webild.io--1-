@@ -1,38 +1,50 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { apiGet } from '../utils/api';
 
 const faqItems = [
   {
-    q: 'What makes UMBRA fragrances different from other luxury brands?',
-    a: 'Our fragrances are composed using rare, sustainably sourced essences and crafted by master perfumers with decades of experience. Each scent is designed to evolve uniquely on your skin.',
+    q: 'What makes Kruxnut snacks different from other brands?',
+    a: 'Our snacks are made using 100% natural ingredients with no artificial flavors, no palm oil, and no chemicals. Every product is roasted to perfection for extra crunch and nutrition.',
   },
   {
-    q: 'How long does the fragrance last on skin?',
-    a: 'Our Eau de Parfum concentrations are formulated to last 8–12 hours on skin, with sillage projecting beautifully for the first 4–6 hours. Warmer skin typically extends the longevity.',
+    q: 'Are your products suitable for people with allergies?',
+    a: 'We clearly label all allergens on our packaging. Our products may contain nuts and seeds. Please check individual product labels for specific allergen information.',
   },
   {
-    q: 'Are your fragrances suitable for sensitive skin?',
-    a: 'Yes. All UMBRA fragrances are formulated with gentle, high-quality ingredients and are free from parabens and harmful sulfates. We recommend a patch test if you have particularly sensitive skin.',
+    q: 'How fresh are your products?',
+    a: 'All Kruxnut products are freshly prepared and packed. We ensure minimal shelf time and use premium packaging to lock in freshness and crunch for every bite.',
   },
   {
-    q: 'Do you offer a satisfaction guarantee?',
-    a: 'Yes. We offer a 30-day satisfaction guarantee. If you are not completely satisfied with your purchase, please contact us for a full refund or exchange.',
+    q: 'Do you offer free shipping?',
+    a: 'Yes! We offer free shipping on all orders above ₹500. Orders are typically dispatched within 24 hours and delivered within 3-5 business days.',
   },
   {
-    q: 'Are your ingredients natural or synthetic?',
-    a: 'We use a harmonious blend of natural extracts and safe synthetic molecules to ensure consistency, performance, and ethical sourcing. All ingredients comply with IFRA standards.',
+    q: 'Are your snacks healthy for weight management?',
+    a: 'Absolutely! Our roasted nuts and makhanas are rich in protein, fiber, and essential nutrients — making them an ideal alternative to chips and junk food for weight management and heart health.',
   },
   {
-    q: 'How do I choose the right fragrance for me?',
-    a: 'We recommend exploring our Discovery Set or visiting our store for a personalized consultation. Our team can help you find a scent that matches your personality and lifestyle.',
+    q: 'Where can I buy Kruxnut products?',
+    a: 'You can order directly from our website or find us on major e-commerce platforms. For bulk orders, please contact us at Care@kruxnut.com.',
   },
 ];
 
 export default function Faq() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [faqImage, setFaqImage] = useState('https://storage.googleapis.com/webild/default/templates/skincare-luxury/faq-image.webp');
 
   const toggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
+
+  useEffect(() => {
+    apiGet<{ faqImage?: string }>('/api/craft')
+      .then((data) => {
+        if (data?.faqImage) {
+          setFaqImage(data.faqImage);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   return (
     <>
@@ -46,14 +58,14 @@ export default function Faq() {
               className="bg-gradient-to-r from-foreground to-primary-cta bg-clip-text text-transparent pb-[0.1em] -mb-[0.1em] md:max-w-8/10 text-6xl 2xl:text-7xl leading-[1.15] font-semibold text-center text-balance">
               Frequently Asked Questions</h2>
             <p className="md:max-w-7/10 text-lg md:text-xl leading-snug text-center text-balance">Everything you need to
-              know about our luxury fragrances, ingredients, and satisfaction guarantee.</p>
+              know about our healthy snacks, ingredients, and quality promise.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
             <div className="card relative md:col-span-2 h-80 md:h-auto rounded overflow-hidden"
               style={{"opacity": "1", "transform": "none", }}><img
-                alt="https://storage.googleapis.com/webild/default/templates/skincare-luxury/faq-image.webp"
+                alt="FAQ section image"
                 className="min-h-0 rounded absolute inset-0 size-full object-cover"
-                src="https://storage.googleapis.com/webild/default/templates/skincare-luxury/faq-image.webp" loading="lazy" /></div>
+                src={faqImage} loading="lazy" /></div>
             <div className="md:col-span-3 flex flex-col gap-3 xl:gap-3.5 2xl:gap-4" style={{"opacity": "1", "transform": "none", }}>
               {faqItems.map((item, index) => (
                 <div key={index} className="border border-black/5 rounded overflow-hidden">

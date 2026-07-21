@@ -1,38 +1,81 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiGet } from '../utils/api';
 
-interface HeroData {
-  title: string;
-  subtitle: string;
+interface CarouselImage {
+  url: string;
+  alt: string;
 }
 
-const defaultHero: HeroData = {
-  title: "A Fragrance That Lingers Long After You Leave",
-  subtitle: "Discover our award-winning perfumes crafted with rare botanicals and master perfumery. Find your signature scent — the one they never forget.",
-};
+const defaultImages: CarouselImage[] = [
+  { url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-2.webp', alt: 'Product showcase 1' },
+  { url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-3.webp', alt: 'Product showcase 2' },
+  { url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-4.webp', alt: 'Product showcase 3' },
+  { url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-5.webp', alt: 'Product showcase 4' },
+  { url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-6.webp', alt: 'Product showcase 5' },
+];
 
 export default function Hero() {
-  const [heroData, setHeroData] = useState<HeroData>(defaultHero);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [images, setImages] = useState<CarouselImage[]>(defaultImages);
+  const [activeIndex, setActiveIndex] = useState(2); // center image
 
   useEffect(() => {
-    apiGet<HeroData>('/api/hero')
-      .then(data => {
-        if (data && data.title) {
-          setHeroData({ title: data.title, subtitle: data.subtitle });
+    apiGet<{ title?: string; subtitle?: string; images?: string[] }>('/api/hero')
+      .then((data) => {
+        if (data?.images && data.images.length > 0) {
+          setImages(data.images.map((url, index) => ({ url, alt: `Hero image ${index + 1}` })));
+          setActiveIndex(Math.floor(data.images.length / 2));
         }
-        setLoading(false);
       })
-      .catch(err => {
-        console.error(err);
-        setError(err.message);
-        setLoading(false);
-      });
+      .catch(console.error);
   }, []);
 
-  if (loading) return null;
-  if (error) return null;
+  // Auto-rotate carousel
+  const nextSlide = useCallback(() => {
+    setActiveIndex(prev => (prev + 1) % images.length);
+  }, [images.length]);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const interval = setInterval(nextSlide, 3500);
+    return () => clearInterval(interval);
+  }, [nextSlide, images.length]);
+
+  // Calculate position styles for each card relative to active
+  const getCardStyle = (index: number): React.CSSProperties => {
+    const total = images.length;
+    let diff = index - activeIndex;
+    // Wrap around for circular effect
+    if (diff > total / 2) diff -= total;
+    if (diff < -total / 2) diff += total;
+
+    const absD = Math.abs(diff);
+
+    if (absD > 2) {
+      return { opacity: 0, zIndex: 1, transform: `translateX(${diff > 0 ? 300 : -300}%) scale(0.6)`, pointerEvents: 'none' };
+    }
+
+    const translateX = diff * 100;
+    const translateY = absD * 5;
+    const scale = 1 - absD * 0.12;
+    const rotate = diff * 2;
+    const zIndex = 10 - absD;
+
+    return {
+      zIndex,
+      opacity: 1,
+      transform: `translateX(${translateX}%) translateY(${translateY}%) scale(${scale}) rotate(${rotate}deg)`,
+      transition: 'all 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
+    };
+  };
+
+  const getOverlayStyle = (index: number): React.CSSProperties => {
+    const total = images.length;
+    let diff = index - activeIndex;
+    if (diff > total / 2) diff -= total;
+    if (diff < -total / 2) diff += total;
+    const absD = Math.abs(diff);
+    return { opacity: absD > 0 ? 1 : 0 };
+  };
 
   const rayStyle = (opacity: string, transform: string, animation: string) => ({
     "--ray-opacity": opacity,
@@ -95,69 +138,55 @@ export default function Hero() {
         </div>
         <div className="flex flex-col items-center gap-3 w-content-width mx-auto text-center z-10">
           <div className="px-3 py-1 mb-1 text-sm card rounded w-fit">
-            <p>Luxury Fragrance</p>
+            <p>Premium Snacks</p>
           </div>
           <h1
             className="bg-gradient-to-r from-foreground to-primary-cta bg-clip-text text-transparent pb-[0.1em] -mb-[0.1em] md:max-w-8/10 text-7xl 2xl:text-8xl leading-[1.15] font-semibold text-center text-balance">
-            {heroData.title}</h1>
-          <p className="md:max-w-7/10 text-lg md:text-xl leading-snug text-balance">{heroData.subtitle}
+            Swad Sang Sehat — Taste with a Twist of Health!</h1>
+          <p className="md:max-w-7/10 text-lg md:text-xl leading-snug text-balance">100% Fresh &amp; Organic Foods
           </p>
           <div className="flex flex-wrap justify-center gap-3 mt-2 md:mt-3">
             <div style={{"opacity": "1", "transform": "none", }}><a href="#products"
                 className="flex items-center justify-center h-10 px-6 text-sm rounded cursor-pointer primary-button text-primary-cta-text"
-                style={{"transform": "none", }}>Explore Collection</a></div>
+                style={{"transform": "none", }}>View Details</a></div>
             <div style={{"opacity": "1", "transform": "none", }}><a href="#features"
                 className="flex items-center justify-center h-10 px-6 text-sm rounded cursor-pointer secondary-button text-secondary-cta-text"
                 style={{"transform": "none", }}>Our Craft</a></div>
           </div>
         </div>
+
+        {/* Auto-scrolling Carousel */}
         <div className="relative flex items-center justify-center w-full overflow-hidden">
           <div className="w-[70%] md:w-[40%] aspect-square md:aspect-video opacity-0"></div>
-          <div
-            className="absolute w-[70%] md:w-[40%] aspect-square md:aspect-video p-2 xl:p-3 2xl:p-4 card rounded-lg overflow-hidden"
-            style={{"zIndex": "3", "opacity": "1", "transform": "translateX(-200%) translateY(10%) scale(0.8) rotate(-4deg)", }}><img
-              alt="https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-2.webp"
-              className="min-h-0 w-full h-full rounded-lg object-cover"
-              src="https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-2.webp" />
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] pointer-events-none" style={{"opacity": "1", }}>
-            </div>
-          </div>
-          <div
-            className="absolute w-[70%] md:w-[40%] aspect-square md:aspect-video p-2 xl:p-3 2xl:p-4 card rounded-lg overflow-hidden"
-            style={{"zIndex": "4", "opacity": "1", "transform": "translateX(-100%) translateY(5%) scale(0.88) rotate(-2deg)", }}><img
-              alt="https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-3.webp"
-              className="min-h-0 w-full h-full rounded-lg object-cover"
-              src="https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-3.webp" />
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] pointer-events-none" style={{"opacity": "1", }}>
-            </div>
-          </div>
-          <div
-            className="absolute w-[70%] md:w-[40%] aspect-square md:aspect-video p-2 xl:p-3 2xl:p-4 card rounded-lg overflow-hidden"
-            style={{"zIndex": "10", "opacity": "1", "transform": "none", }}><img
-              alt="https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-4.webp"
-              className="min-h-0 w-full h-full rounded-lg object-cover"
-              src="https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-4.webp" />
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] pointer-events-none" style={{"opacity": "0", }}>
-            </div>
-          </div>
-          <div
-            className="absolute w-[70%] md:w-[40%] aspect-square md:aspect-video p-2 xl:p-3 2xl:p-4 card rounded-lg overflow-hidden"
-            style={{"zIndex": "4", "opacity": "1", "transform": "translateX(100%) translateY(5%) scale(0.88) rotate(2deg)", }}><img
-              alt="https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-5.webp"
-              className="min-h-0 w-full h-full rounded-lg object-cover"
-              src="https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-5.webp" />
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] pointer-events-none" style={{"opacity": "1", }}>
-            </div>
-          </div>
-          <div
-            className="absolute w-[70%] md:w-[40%] aspect-square md:aspect-video p-2 xl:p-3 2xl:p-4 card rounded-lg overflow-hidden"
-            style={{"zIndex": "3", "opacity": "1", "transform": "translateX(200%) translateY(10%) scale(0.8) rotate(4deg)", }}><img
-              alt="https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-6.webp"
-              className="min-h-0 w-full h-full rounded-lg object-cover"
-              src="https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-6.webp" />
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] pointer-events-none" style={{"opacity": "1", }}>
-            </div>
-          </div>
+          {images.map((img, index) => {
+            const style = getCardStyle(index);
+            const overlayStyle = getOverlayStyle(index);
+            // Only render cards within visible range
+            const total = images.length;
+            let diff = index - activeIndex;
+            if (diff > total / 2) diff -= total;
+            if (diff < -total / 2) diff += total;
+            if (Math.abs(diff) > 2) return null;
+
+            return (
+              <div
+                key={index}
+                className="absolute w-[70%] md:w-[40%] aspect-square md:aspect-video p-2 xl:p-3 2xl:p-4 card rounded-lg overflow-hidden cursor-pointer"
+                style={style}
+                onClick={() => setActiveIndex(index)}
+              >
+                <img
+                  alt={img.alt}
+                  className="min-h-0 w-full h-full rounded-lg object-cover"
+                  src={img.url}
+                />
+                <div
+                  className="absolute inset-0 bg-background/50 backdrop-blur-[1px] pointer-events-none transition-opacity duration-500"
+                  style={overlayStyle}
+                />
+              </div>
+            );
+          })}
         </div>
       </section>
     </>

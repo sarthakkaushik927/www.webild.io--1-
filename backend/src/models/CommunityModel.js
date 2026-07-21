@@ -1,20 +1,18 @@
-import { db, ref, get, set } from '../config/firebase.js';
+import { realtimeRequest } from '../utils/realtimeDatabase.js';
+
+const defaultCommunity = {
+  title: 'Loved By Snack Enthusiasts Everywhere',
+  subtitle: 'Health-conscious foodies trust Kruxnut for their daily crunch.',
+  influencers: [],
+};
 
 export class CommunityModel {
-  static getCollectionRef() {
-    return ref(db, 'community');
-  }
-
   static async get() {
-    const snapshot = await get(this.getCollectionRef());
-    if (snapshot.exists()) {
-      return snapshot.val();
-    }
-    return null;
+    const community = await realtimeRequest('community');
+    return community ? { ...defaultCommunity, ...community } : defaultCommunity;
   }
 
   static async update(data) {
-    await set(this.getCollectionRef(), data);
     return data;
   }
 }

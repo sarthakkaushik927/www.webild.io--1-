@@ -7,9 +7,9 @@ import { ArrowRight } from 'lucide-react';
 gsap.registerPlugin(ScrollTrigger);
 
 const marqueeItems = [
-  'RARE ESSENCES', 'HAND CRAFTED', 'SUSTAINABLE', 'PARABEN FREE',
-  'VEGAN', 'AWARD WINNING', 'RARE ESSENCES', 'HAND CRAFTED',
-  'SUSTAINABLE', 'PARABEN FREE', 'VEGAN', 'AWARD WINNING',
+  '100% NATURAL', 'HAND ROASTED', 'NO PALM OIL', 'CHEMICAL FREE',
+  'PROTEIN RICH', 'ECO FRIENDLY', '100% NATURAL', 'HAND ROASTED',
+  'NO PALM OIL', 'CHEMICAL FREE', 'PROTEIN RICH', 'ECO FRIENDLY',
 ];
 
 export default function MarqueeAndCta() {
@@ -76,11 +76,11 @@ export default function MarqueeAndCta() {
                 <span className="text-xs font-medium tracking-widest text-[#3A1510] uppercase">Stay Inspired</span>
               </div>
               <h2 className="font-serif text-4xl md:text-5xl xl:text-6xl font-bold text-[#1C1917] mb-6 leading-tight">
-                Find Your <em className="not-italic text-[#5C2318]">Signature</em> Scent
+                Find Your <em className="not-italic text-[#5C2318]">Favorite</em> Snack
               </h2>
               <p className="text-[#6B5B52] text-base leading-relaxed mb-8 max-w-md">
-                Join over 150,000 fragrance lovers who receive early access to new launches,
-                exclusive offers, and expert perfumery insights.
+                Join over 50,000 health-conscious snack lovers who receive early access to new flavors,
+                exclusive offers, and healthy eating tips.
               </p>
               {subscribed ? (
                 <p className="text-[#3A1510] font-medium">Thank you for subscribing!</p>
@@ -112,7 +112,7 @@ export default function MarqueeAndCta() {
               <div className="relative rounded-3xl overflow-hidden h-80 md:h-96 shadow-2xl shadow-[#3A1510]/20">
                 <img
                   src="https://images.unsplash.com/photo-1601628828688-632f38a5a7d0?w=700&q=80"
-                  alt="Perfume atmosphere"
+                  alt="Healthy snacks atmosphere"
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
@@ -124,8 +124,8 @@ export default function MarqueeAndCta() {
                 transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
                 className="absolute -bottom-5 -left-5 bg-white rounded-2xl shadow-xl px-6 py-5"
               >
-                <div className="text-[#3A1510] font-serif text-3xl font-bold">150k+</div>
-                <div className="text-[#6B5B52] text-xs mt-1">Happy Community Members</div>
+                <div className="text-[#3A1510] font-serif text-3xl font-bold">50k+</div>
+                <div className="text-[#6B5B52] text-xs mt-1">Happy Customers</div>
               </motion.div>
 
               <motion.div
@@ -133,8 +133,8 @@ export default function MarqueeAndCta() {
                 transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut', delay: 0.5 }}
                 className="absolute -top-5 -right-3 bg-[#3A1510] rounded-2xl px-5 py-4"
               >
-                <div className="text-[#C9A96E] text-xs font-medium tracking-widest uppercase mb-1">Best Luxury Fragrance</div>
-                <div className="text-[#F7F3EE] font-serif text-sm font-semibold">Awards 2024</div>
+                <div className="text-[#C9A96E] text-xs font-medium tracking-widest uppercase mb-1">Best Healthy Snacks</div>
+                <div className="text-[#F7F3EE] font-serif text-sm font-semibold">Quality 2024</div>
               </motion.div>
             </motion.div>
           </div>

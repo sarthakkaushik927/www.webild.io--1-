@@ -5,13 +5,13 @@ export default function Journal() {
               <div className="w-content-width mx-auto flex flex-col gap-8 md:gap-10">
                 <div className="flex flex-col items-center gap-2">
                   <div className="px-3 py-1 mb-1 text-sm card rounded w-fit">
-                    <p>Journal</p>
+                    <p>Blog</p>
                   </div>
                   <h2
                     className="bg-gradient-to-r from-foreground to-primary-cta bg-clip-text text-transparent pb-[0.1em] -mb-[0.1em] md:max-w-8/10 text-6xl 2xl:text-7xl leading-[1.15] font-semibold text-center text-balance">
-                    The UMBRA Journal</h2>
-                  <p className="md:max-w-7/10 text-lg md:text-xl leading-snug text-center text-balance">Stories of scent, craft,
-                    and the women who inspire us. Explore the world behind our fragrances.</p>
+                    The Kruxnut Blog</h2>
+                  <p className="md:max-w-7/10 text-lg md:text-xl leading-snug text-center text-balance">Stories of health, taste,
+                    and the people who inspire us. Explore the world behind our snacks.</p>
                 </div>
                 <div className="" style={{"opacity": "1", }}>
                   <div className="grid grid-cols-1 gap-5 mx-auto w-content-width md:grid-cols-3">
@@ -35,12 +35,12 @@ export default function Journal() {
                       <div className="flex flex-1 flex-col justify-between gap-2 p-3 xl:p-3.5 2xl:p-4">
                         <div className="flex flex-col gap-2">
                           <div className="px-3 py-1 mb-1 text-sm primary-button text-primary-cta-text rounded w-fit">
-                            <p>Fragrance Notes</p>
+                            <p>Healthy Snacking</p>
                           </div>
-                          <h3 className="text-2xl font-semibold leading-snug text-balance">The Art of Layering Scents for Every
-                            Season</h3>
-                          <p className="text-base leading-snug text-balance">Discover how to combine UMBRA fragrances for a
-                            signature scent that evolves with you throughout the day.</p>
+                          <h3 className="text-2xl font-semibold leading-snug text-balance">Why Makhana is the Ultimate Guilt-Free
+                            Snack</h3>
+                          <p className="text-base leading-snug text-balance">Discover why roasted makhana is taking over as
+                            the healthiest snacking option for fitness enthusiasts.</p>
                         </div>
                         <div className="flex items-center gap-3 mt-2 md:mt-3"><img
                             alt="https://storage.googleapis.com/webild/default/templates/skincare-luxury/blog/authors/author-1.webp"
@@ -73,12 +73,12 @@ export default function Journal() {
                       <div className="flex flex-1 flex-col justify-between gap-2 p-3 xl:p-3.5 2xl:p-4">
                         <div className="flex flex-col gap-2">
                           <div className="px-3 py-1 mb-1 text-sm primary-button text-primary-cta-text rounded w-fit">
-                            <p>Behind the Bottle</p>
+                            <p>Behind the Pack</p>
                           </div>
-                          <h3 className="text-2xl font-semibold leading-snug text-balance">From Grasse to Your Vanity: Sourcing
-                            Rose Absolute</h3>
-                          <p className="text-base leading-snug text-balance">A journey through the fields of Provence where our
-                            master perfumers hand-select the rarest rose petals.</p>
+                          <h3 className="text-2xl font-semibold leading-snug text-balance">From Farm to Your Table: Sourcing
+                            the Finest Peanuts</h3>
+                          <p className="text-base leading-snug text-balance">A journey through the farms of India where our
+                            team hand-selects the freshest, highest-quality nuts.</p>
                         </div>
                         <div className="flex items-center gap-3 mt-2 md:mt-3"><img
                             alt="https://storage.googleapis.com/webild/default/templates/skincare-luxury/blog/authors/author-2.webp"
@@ -110,12 +110,12 @@ export default function Journal() {
                       <div className="flex flex-1 flex-col justify-between gap-2 p-3 xl:p-3.5 2xl:p-4">
                         <div className="flex flex-col gap-2">
                           <div className="px-3 py-1 mb-1 text-sm primary-button text-primary-cta-text rounded w-fit">
-                            <p>Women of UMBRA</p>
+                            <p>Nutrition Tips</p>
                           </div>
-                          <h3 className="text-2xl font-semibold leading-snug text-balance">How Amara Osei Found Her Signature
-                            Scent</h3>
-                          <p className="text-base leading-snug text-balance">The model and entrepreneur shares why Noir Absolu
-                            became the fragrance she never leaves the house without.</p>
+                          <h3 className="text-2xl font-semibold leading-snug text-balance">5 Reasons to Replace Chips with
+                            Roasted Snacks</h3>
+                          <p className="text-base leading-snug text-balance">A nutritionist explains why switching to roasted
+                            nuts and makhanas can transform your health and energy levels.</p>
                         </div>
                         <div className="flex items-center gap-3 mt-2 md:mt-3"><img
                             alt="https://storage.googleapis.com/webild/default/templates/skincare-luxury/blog/authors/author-3.webp"

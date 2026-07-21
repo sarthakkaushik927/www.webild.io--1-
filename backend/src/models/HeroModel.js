@@ -1,30 +1,24 @@
-import { db, ref, get, set, update } from '../config/firebase.js';
+import { realtimeRequest } from '../utils/realtimeDatabase.js';
+
+const defaultHero = {
+  title: 'Swad Sang Sehat - Taste with a Twist of Health!',
+  subtitle: '100% Fresh & Organic Foods',
+  images: [
+    'https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-2.webp',
+    'https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-3.webp',
+    'https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-4.webp',
+    'https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-5.webp',
+    'https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-6.webp',
+  ],
+};
 
 export class HeroModel {
-  static getRef() {
-    return ref(db, 'hero');
-  }
-
   static async getHeroContent() {
-    const snapshot = await get(this.getRef());
-    if (snapshot.exists()) {
-      return snapshot.val();
-    }
-    // Default hero content if none exists
-    const defaultHero = {
-      title: "Discover UMBRA",
-      subtitle: "The Pinnacle of Luxury",
-      images: [
-        "https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-1.webp",
-        "https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-2.webp"
-      ]
-    };
-    await this.updateHeroContent(defaultHero);
-    return defaultHero;
+    const hero = await realtimeRequest('hero');
+    return hero ? { ...defaultHero, ...hero } : defaultHero;
   }
 
   static async updateHeroContent(data) {
-    await set(this.getRef(), data);
     return data;
   }
 }

@@ -30,8 +30,8 @@ export default function Contact() {
                     <h2
                       className="bg-gradient-to-r from-foreground to-primary-cta bg-clip-text text-transparent pb-[0.1em] -mb-[0.1em] text-6xl 2xl:text-7xl leading-[1.15] font-semibold text-balance">
                       Get in Touch</h2>
-                    <p className="text-lg md:text-xl leading-snug text-balance">Have a question or looking for your signature
-                      scent? We'd love to hear from you.</p>
+                    <p className="text-lg md:text-xl leading-snug text-balance">Have a question or looking for bulk orders?
+                      We'd love to hear from you.</p>
                   </div>
                   <div className="flex flex-col gap-3"><input placeholder="Your name" required={true} aria-label="Your name"
                       className="w-full px-5 py-3 text-base bg-transparent placeholder:opacity-75 focus:outline-none card rounded"
@@ -41,8 +41,8 @@ export default function Contact() {
                       className="w-full px-5 py-3 text-base bg-transparent placeholder:opacity-75 focus:outline-none card rounded"
                       type="tel" /><input placeholder="How can we help?" required={true} aria-label="How can we help?"
                       className="w-full px-5 py-3 text-base bg-transparent placeholder:opacity-75 focus:outline-none card rounded"
-                      type="text" />                      <textarea placeholder="Tell us about your fragrance preferences..." required={true}
-                      rows={5} aria-label="Tell us about your fragrance preferences..."
+                      type="text" />                      <textarea placeholder="Tell us your message..." required={true}
+                      rows={5} aria-label="Tell us your message..."
                       className="w-full px-5 py-3 text-base bg-transparent placeholder:opacity-75 focus:outline-none resize-none card rounded"></textarea><button
                       type="submit"
                       className="flex items-center justify-center w-full h-10 px-6 text-sm primary-button text-primary-cta-text rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Send

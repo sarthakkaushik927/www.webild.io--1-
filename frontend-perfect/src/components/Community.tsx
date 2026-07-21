@@ -13,8 +13,8 @@ export interface CommunityData {
 }
 
 const defaultCommunity: CommunityData = {
-  title: "Worn By Those Who Set The Standard",
-  subtitle: "The women shaping culture choose UMBRA as their signature.",
+  title: "Loved By Snack Enthusiasts Everywhere",
+  subtitle: "Health-conscious foodies trust Kruxnut for their daily crunch.",
   influencers: [
     {
       name: "Amara Osei",
@@ -57,10 +57,11 @@ export default function Community() {
             influencers: data.influencers && data.influencers.length > 0 ? data.influencers : defaultCommunity.influencers
           });
         }
-        setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.error('Failed to load community data:', err);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
@@ -73,7 +74,7 @@ export default function Community() {
         <div className="flex flex-col gap-8 md:gap-10">
           <div className="flex flex-col items-center w-content-width mx-auto gap-2">
             <div className="px-3 py-1 mb-1 text-sm card rounded w-fit">
-              <p>Community</p>
+              <p>Our Community</p>
             </div>
             <h2 className="bg-gradient-to-r from-foreground to-primary-cta bg-clip-text text-transparent pb-[0.1em] -mb-[0.1em] md:max-w-8/10 text-6xl 2xl:text-7xl leading-[1.15] font-semibold text-center text-balance">
               {communityData.title}

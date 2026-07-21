@@ -1,42 +1,39 @@
-import { db, ref, get, set, update, remove, push } from '../config/firebase.js';
+import { firestoreDb, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc } from '../config/firebase.js';
 
 export class MediaModel {
   static getRef() {
-    return ref(db, 'media');
+    return collection(firestoreDb, 'media');
   }
 
   static async getAll() {
-    const snapshot = await get(this.getRef());
-    if (snapshot.exists()) {
-      return Object.keys(snapshot.val()).map(key => ({ id: key, ...snapshot.val()[key] }));
-    }
-    return [];
+    const snapshot = await getDocs(this.getRef());
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 
   static async getById(id) {
-    const mediaRef = ref(db, `media/${id}`);
-    const snapshot = await get(mediaRef);
-    if (snapshot.exists()) {
-      return { id, ...snapshot.val() };
+    const docRef = doc(firestoreDb, 'media', id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
     }
     return null;
   }
 
   static async create(data) {
-    const newMediaRef = push(this.getRef());
-    await set(newMediaRef, data);
-    return { id: newMediaRef.key, ...data };
+    const docRef = doc(this.getRef());
+    await setDoc(docRef, data);
+    return { id: docRef.id, ...data };
   }
 
   static async update(id, data) {
-    const mediaRef = ref(db, `media/${id}`);
-    await update(mediaRef, data);
-    return { id, ...data };
+    const docRef = doc(firestoreDb, 'media', id);
+    await updateDoc(docRef, data);
+    const docSnap = await getDoc(docRef);
+    return { id: docSnap.id, ...docSnap.data() };
   }
 
   static async delete(id) {
-    const mediaRef = ref(db, `media/${id}`);
-    await remove(mediaRef);
+    await deleteDoc(doc(firestoreDb, 'media', id));
     return { id };
   }
 }

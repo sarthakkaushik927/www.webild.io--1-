@@ -1,399 +1,216 @@
 import { useState, useEffect } from 'react';
-import type { FormEvent } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase';
 import { useNavigate } from 'react-router-dom';
-import { apiGet, apiPost, apiPutAuth, apiDeleteAuth } from '../utils/api';
-import type { Product } from '../components/Collection';
-
-const ADMIN_TOKEN = 'umbra-admin-secret-2024';
+import { adminService, productService, categoryService } from '../services/firebaseService';
+import { adminAuthService } from '../services/adminAuthService';
+import type { Profile, Product, Category } from '../lib/firebase';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('products');
-
-  // Shared
   const [loading, setLoading] = useState(false);
 
-  // Products
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<Profile[]>([]);
+
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [productName, setProductName] = useState('');
-  const [productTag, setProductTag] = useState('');
-  const [productDesc, setProductDesc] = useState('');
-  const [productImage, setProductImage] = useState<File | null>(null);
+  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', category_id: '', image_url: '' });
+  const [productImagePreview, setProductImagePreview] = useState('');
 
-  // Carousel
-  const [carouselImages, setCarouselImages] = useState<string[]>([]);
-  const [carouselLoading, setCarouselLoading] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', image_url: '' });
+  const [categoryImagePreview, setCategoryImagePreview] = useState('');
 
-  // Craft
-  const [craftTitle, setCraftTitle] = useState('');
-  const [craftSubtitle, setCraftSubtitle] = useState('');
-  const [craftSteps, setCraftSteps] = useState<Array<{ id?: string; title: string; description: string; imageUrl: string }>>([]);
-  const [craftLoading, setCraftLoading] = useState(false);
-
-  // Community
-  const [communityTitle, setCommunityTitle] = useState('');
-  const [communitySubtitle, setCommunitySubtitle] = useState('');
-  const [communityInfluencers, setCommunityInfluencers] = useState<Array<{ id?: string; name: string; videoUrl: string }>>([]);
-  const [communityLoading, setCommunityLoading] = useState(false);
-
-  // Media Library
-  const [mediaItems, setMediaItems] = useState<Array<{ id: string; url: string; section?: string; title?: string; description?: string }>>([]);
-  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
-  const [editingMedia, setEditingMedia] = useState<any>(null);
-  const [mediaUrl, setMediaUrl] = useState('');
-  const [mediaSection, setMediaSection] = useState('');
-  const [mediaTitle, setMediaTitle] = useState('');
-  const [mediaDescription, setMediaDescription] = useState('');
-
-  // Fetch helpers
-  const fetchProducts = async () => {
-    try {
-      const data = await apiGet<Product[]>('/api/products');
-      setProducts(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchCarousel = async () => {
-    try {
-      const data = await apiGet<{ images?: string[] }>('/api/carousel');
-      if (data) {
-        setCarouselImages(Array.isArray(data.images) ? data.images : []);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchCraft = async () => {
-    try {
-      const data = await apiGet<{ title?: string; subtitle?: string; steps?: any[] }>('/api/craft');
-      if (data) {
-        setCraftTitle(data.title || '');
-        setCraftSubtitle(data.subtitle || '');
-        setCraftSteps(Array.isArray(data.steps) ? data.steps.map((s: any, i: number) => ({ id: String(i), ...s })) : []);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchCommunity = async () => {
-    try {
-      const data = await apiGet<{ title?: string; subtitle?: string; influencers?: any[] }>('/api/community');
-      if (data) {
-        setCommunityTitle(data.title || '');
-        setCommunitySubtitle(data.subtitle || '');
-        setCommunityInfluencers(Array.isArray(data.influencers) ? data.influencers.map((inf: any, i: number) => ({ id: String(i), ...inf })) : []);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchMedia = async () => {
-    try {
-      const data = await apiGet<any[]>('/api/media');
-      setMediaItems(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
-    fetchProducts();
-    fetchCarousel();
-    fetchCraft();
-    fetchCommunity();
-    fetchMedia();
+    checkAuth();
   }, []);
 
-  // Products
-  const openAddProductModal = () => {
-    setEditingProduct(null);
-    setProductName('');
-    setProductTag('');
-    setProductDesc('');
-    setProductImage(null);
-    setIsProductModalOpen(true);
-  };
-
-  const openEditProductModal = (product: Product) => {
-    setEditingProduct(product);
-    setProductName(product.name);
-    setProductTag(product.tag || '');
-    setProductDesc(product.description || '');
-    setProductImage(null);
-    setIsProductModalOpen(true);
-  };
-
-  const handleDeleteProduct = async (id: string) => {
-    if (!confirm('Delete this product?')) return;
-    try {
-      await apiDeleteAuth(`/api/products/${id}`, ADMIN_TOKEN);
-      fetchProducts();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete product');
+  useEffect(() => {
+    if (activeTab === 'products') loadProducts();
+    if (activeTab === 'categories') loadCategories();
+    if (activeTab === 'users') {
+      loadPendingUsers();
     }
-  };
+  }, [activeTab]);
 
-  const handleSaveProduct = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!productName) {
-      alert("Name is required.");
+  const checkAuth = async () => {
+    if (!adminAuthService.isAuthenticated()) {
+      navigate('/admin');
       return;
     }
+  };
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const fileToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+
+  const handleProductImageUpload = async (file?: File | null) => {
+    if (!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    setProductForm((current) => ({ ...current, image_url: dataUrl }));
+    setProductImagePreview(dataUrl);
+  };
+
+  const handleCategoryImageUpload = async (file?: File | null) => {
+    if (!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    setCategoryForm((current) => ({ ...current, image_url: dataUrl }));
+    setCategoryImagePreview(dataUrl);
+  };
+
+  const loadProducts = async () => {
+    const { data } = await productService.getAll();
+    if (data) setProducts(data as Product[]);
+  };
+
+  const loadCategories = async () => {
+    const { data } = await categoryService.getAllAdmin();
+    if (data) setCategories(data as Category[]);
+  };
+
+  const loadPendingUsers = async () => {
+    const { data } = await adminService.getPendingUsers();
+    if (data) setPendingUsers(data as Profile[]);
+  };
+
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     try {
-      let imageUrl: string | undefined;
-      if (productImage) {
-        const imageRef = ref(storage, `products/${Date.now()}_${productImage.name}`);
-        const uploadResult = await uploadBytes(imageRef, productImage);
-        imageUrl = await getDownloadURL(uploadResult.ref);
-      }
-      const payload: any = { name: productName, tag: productTag, description: productDesc };
-      if (imageUrl) payload.imageUrl = imageUrl;
-
       if (editingProduct) {
-        await apiPutAuth(`/api/products/${editingProduct.id}`, payload, ADMIN_TOKEN);
+        await productService.update(editingProduct.id, {
+          ...productForm,
+          price: parseFloat(productForm.price),
+        });
+        showToast('Product updated', 'success');
       } else {
-        await apiPost('/api/products', payload);
+        await productService.create({
+          ...productForm,
+          price: parseFloat(productForm.price),
+          is_available: true,
+        });
+        showToast('Product created', 'success');
       }
       setIsProductModalOpen(false);
-      fetchProducts();
-    } catch (error) {
-      console.error(error);
-      alert("An error occurred.");
+      loadProducts();
+    } catch (err) {
+      showToast('Failed to save product', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  // Carousel
-  const handleUpdateCarousel = async (e: FormEvent) => {
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm('Delete this product?')) return;
+    await productService.delete(id);
+    loadProducts();
+  };
+
+  const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCarouselLoading(true);
+    setLoading(true);
     try {
-      await apiPutAuth('/api/carousel', { images: carouselImages }, ADMIN_TOKEN);
-      alert("Carousel updated!");
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update carousel");
-    } finally {
-      setCarouselLoading(false);
-    }
-  };
-
-  const addCarouselImage = () => {
-    const url = prompt("Enter image URL:");
-    if (url) setCarouselImages([...carouselImages, url]);
-  };
-
-  const removeCarouselImage = (index: number) => {
-    setCarouselImages(carouselImages.filter((_, i) => i !== index));
-  };
-
-  // Craft
-  const handleUpdateCraft = async (e: FormEvent) => {
-    e.preventDefault();
-    setCraftLoading(true);
-    try {
-      const steps = craftSteps.map(({ id, ...rest }) => rest);
-      await apiPutAuth('/api/craft', { title: craftTitle, subtitle: craftSubtitle, steps }, ADMIN_TOKEN);
-      alert("Craft section updated!");
-      fetchCraft();
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update craft");
-    } finally {
-      setCraftLoading(false);
-    }
-  };
-
-  const addCraftStep = () => {
-    setCraftSteps([...craftSteps, { title: '', description: '', imageUrl: '' }]);
-  };
-
-  const updateCraftStep = (index: number, field: string, value: string) => {
-    const updated = [...craftSteps];
-    updated[index] = { ...updated[index], [field]: value };
-    setCraftSteps(updated);
-  };
-
-  const removeCraftStep = (index: number) => {
-    setCraftSteps(craftSteps.filter((_, i) => i !== index));
-  };
-
-  // Community
-  const handleUpdateCommunity = async (e: FormEvent) => {
-    e.preventDefault();
-    setCommunityLoading(true);
-    try {
-      const influencers = communityInfluencers.map(({ id, ...rest }) => rest);
-      await apiPutAuth('/api/community', { title: communityTitle, subtitle: communitySubtitle, influencers }, ADMIN_TOKEN);
-      alert("Community updated!");
-      fetchCommunity();
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update community");
-    } finally {
-      setCommunityLoading(false);
-    }
-  };
-
-  const addInfluencer = () => {
-    setCommunityInfluencers([...communityInfluencers, { name: '', videoUrl: '' }]);
-  };
-
-  const updateInfluencer = (index: number, field: string, value: string) => {
-    const updated = [...communityInfluencers];
-    updated[index] = { ...updated[index], [field]: value };
-    setCommunityInfluencers(updated);
-  };
-
-  const removeInfluencer = (index: number) => {
-    setCommunityInfluencers(communityInfluencers.filter((_, i) => i !== index));
-  };
-
-  // Media Library
-  const openAddMediaModal = () => {
-    setEditingMedia(null);
-    setMediaUrl('');
-    setMediaSection('');
-    setMediaTitle('');
-    setMediaDescription('');
-    setIsMediaModalOpen(true);
-  };
-
-  const openEditMediaModal = (media: any) => {
-    setEditingMedia(media);
-    setMediaUrl(media.url || '');
-    setMediaSection(media.section || '');
-    setMediaTitle(media.title || '');
-    setMediaDescription(media.description || '');
-    setIsMediaModalOpen(true);
-  };
-
-  const handleDeleteMedia = async (id: string) => {
-    if (!confirm('Delete this media?')) return;
-    try {
-      await apiDeleteAuth(`/api/media/${id}`, ADMIN_TOKEN);
-      fetchMedia();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete media');
-    }
-  };
-
-  const handleSaveMedia = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!mediaUrl) {
-      alert("Image URL is required.");
-      return;
-    }
-    try {
-      const payload: any = {
-        url: mediaUrl,
-        section: mediaSection,
-        title: mediaTitle,
-        description: mediaDescription,
-      };
-
-      if (editingMedia) {
-        await apiPutAuth(`/api/media/${editingMedia.id}`, payload, ADMIN_TOKEN);
+      if (editingCategory) {
+        await categoryService.update(editingCategory.id, categoryForm);
+        showToast('Category updated', 'success');
       } else {
-        await apiPost('/api/media', payload);
+        await categoryService.create(categoryForm);
+        showToast('Category created', 'success');
       }
-      setIsMediaModalOpen(false);
-      fetchMedia();
-    } catch (error) {
-      console.error(error);
-      alert("An error occurred.");
+      setIsCategoryModalOpen(false);
+      loadCategories();
+    } catch (err) {
+      showToast('Failed to save category', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleUploadToStorage = async (file: File): Promise<string> => {
-    const imageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
-    const uploadResult = await uploadBytes(imageRef, file);
-    return await getDownloadURL(uploadResult.ref);
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Delete this category?')) return;
+    await categoryService.delete(id);
+    loadCategories();
   };
 
-  const handleMediaFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const url = await handleUploadToStorage(file);
-      setMediaUrl(url);
-    } catch (error) {
-      console.error(error);
-      alert("Failed to upload image");
-    }
+  const handleApproveUser = async (id: string) => {
+    await adminService.approveUser(id);
+    loadPendingUsers();
   };
 
-  const assignMediaToSection = (media: any, section: string) => {
-    if (section === 'product') {
-      openEditProductModal({ id: media.id, name: media.title || 'Unnamed', tag: '', description: media.description || '', imageUrl: media.url });
-    } else if (section === 'carousel') {
-      setCarouselImages([...carouselImages, media.url]);
-    } else if (section === 'craft') {
-      const title = prompt("Enter craft step title:", media.title || '');
-      const description = prompt("Enter craft step description:", media.description || '');
-      if (title) {
-        setCraftSteps([...craftSteps, { title, description: description || '', imageUrl: media.url }]);
-      }
-    } else if (section === 'community') {
-      const name = prompt("Enter influencer name:", media.title || '');
-      if (name) {
-        setCommunityInfluencers([...communityInfluencers, { name, videoUrl: media.url }]);
-      }
-    }
+  const handleRejectUser = async (id: string) => {
+    await adminService.rejectUser(id);
+    loadPendingUsers();
   };
 
-  const tabs = [
-    { id: 'products', label: 'Products' },
-    { id: 'carousel', label: 'Carousel' },
-    { id: 'craft', label: 'Craft' },
-    { id: 'community', label: 'Community' },
-    { id: 'media', label: 'Media Library' },
-  ];
+  const handleLogout = async () => {
+    adminAuthService.logout();
+    navigate('/admin');
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
-      {/* Consistent Header */}
+      {toast && (
+        <div className={`fixed top-20 right-6 z-50 px-6 py-3 rounded-xl text-white ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+          {toast.message}
+        </div>
+      )}
       <div className="w-full bg-white border-b border-black/10 flex flex-col md:flex-row justify-between items-center fixed top-0 z-40 px-6 py-4">
         <div className="flex items-center gap-8 mb-4 md:mb-0">
-          <h1 className="text-xl font-semibold text-black tracking-widest">UMBRA CMS</h1>
+          <h1 className="text-xl font-semibold text-black tracking-widest">KRUXNUT CMS</h1>
           <div className="flex gap-4 flex-wrap">
-            {tabs.map(tab => (
+            {['products', 'categories', 'users'].map((tab) => (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`text-sm font-medium ${activeTab === tab.id ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'}`}
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`text-sm font-medium capitalize ${activeTab === tab ? 'text-black border-b-2 border-black' : 'text-gray-500 hover:text-black'}`}
               >
-                {tab.label}
+                {tab}
               </button>
             ))}
+            <button
+              onClick={() => navigate('/admin/orders')}
+              className="text-sm font-medium text-gray-500 hover:text-black"
+            >
+              Orders
+            </button>
+            <button
+              onClick={() => navigate('/admin/content')}
+              className="text-sm font-medium text-gray-500 hover:text-black"
+            >
+              Content
+            </button>
+            <button
+              onClick={() => navigate('/admin/api-keys')}
+              className="text-sm font-medium text-gray-500 hover:text-black"
+            >
+              API Keys
+            </button>
           </div>
         </div>
         <div className="flex gap-4">
           <button onClick={() => navigate('/')} className="text-sm text-gray-600 hover:text-black">View Site</button>
-          <button onClick={() => navigate('/admin')} className="text-sm text-red-600 hover:text-red-800">Logout</button>
+          <button onClick={handleLogout} className="text-sm text-red-600 hover:text-red-800">Logout</button>
         </div>
       </div>
 
       <div className="pt-32 px-6 md:px-12 max-w-6xl mx-auto">
-        {/* Products Tab */}
         {activeTab === 'products' && (
           <div>
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-3xl font-light text-black">Manage Products</h2>
-              <button onClick={openAddProductModal} className="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-black/80">
+              <button onClick={() => { setEditingProduct(null); setProductForm({ name: '', description: '', price: '', category_id: '', image_url: '' }); setProductImagePreview(''); setIsProductModalOpen(true); }} className="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-black/80">
                 + Add Product
               </button>
             </div>
@@ -403,7 +220,7 @@ export default function AdminDashboard() {
                   <tr className="bg-black/5 border-b border-black/10">
                     <th className="p-4 text-sm font-medium text-black">Image</th>
                     <th className="p-4 text-sm font-medium text-black">Name</th>
-                    <th className="p-4 text-sm font-medium text-black">Tag</th>
+                    <th className="p-4 text-sm font-medium text-black">Price</th>
                     <th className="p-4 text-sm font-medium text-black text-right">Actions</th>
                   </tr>
                 </thead>
@@ -411,15 +228,15 @@ export default function AdminDashboard() {
                   {products.length === 0 ? (
                     <tr><td colSpan={4} className="p-8 text-center text-gray-500">No products found.</td></tr>
                   ) : (
-                    products.map(p => (
+                    products.map((p) => (
                       <tr key={p.id} className="border-b border-black/5 hover:bg-black/5 transition-colors">
                         <td className="p-4">
-                          {p.imageUrl && <img src={p.imageUrl} alt={p.name} className="w-12 h-12 rounded object-cover" />}
+                          {p.image_url && <img src={p.image_url} alt={p.name} className="w-12 h-12 rounded object-cover" />}
                         </td>
                         <td className="p-4 font-medium text-black">{p.name}</td>
-                        <td className="p-4 text-gray-600">{p.tag || '-'}</td>
+                        <td className="p-4 text-gray-600">₹{p.price}</td>
                         <td className="p-4 text-right">
-                          <button onClick={() => openEditProductModal(p)} className="text-sm px-3 py-1 bg-gray-100 text-black rounded hover:bg-gray-200 mr-2">Edit</button>
+                          <button onClick={() => { setEditingProduct(p); setProductForm({ name: p.name, description: p.description || '', price: String(p.price), category_id: p.category_id || '', image_url: p.image_url || '' }); setProductImagePreview(p.image_url || ''); setIsProductModalOpen(true); }} className="text-sm px-3 py-1 bg-gray-100 text-black rounded hover:bg-gray-200 mr-2">Edit</button>
                           <button onClick={() => handleDeleteProduct(p.id)} className="text-sm px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">Delete</button>
                         </td>
                       </tr>
@@ -431,206 +248,79 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Carousel Tab */}
-        {activeTab === 'carousel' && (
-          <div>
-            <h2 className="text-3xl font-light text-black mb-8">Manage Carousel</h2>
-            <div className="p-8 rounded-2xl border border-black/10 bg-white">
-              <form onSubmit={handleUpdateCarousel} className="space-y-6 max-w-2xl">
-                <div>
-                  <label className="block text-sm text-gray-600 mb-2">Carousel Images</label>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {carouselImages.map((img, index) => (
-                      <div key={index} className="relative group">
-                        <img src={img} alt="" className="w-20 h-20 object-cover rounded border border-black/10" />
-                        <button type="button" onClick={() => removeCarouselImage(index)} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
-                      </div>
-                    ))}
-                  </div>
-                  <button type="button" onClick={addCarouselImage} className="text-sm px-4 py-2 border border-black/10 rounded hover:bg-black/5">+ Add Image</button>
-                </div>
-                <button type="submit" disabled={carouselLoading} className="bg-black text-white px-8 py-3 rounded-lg font-medium hover:bg-black/80 disabled:opacity-50">
-                  {carouselLoading ? 'Saving...' : 'Save Changes'}
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Craft Tab */}
-        {activeTab === 'craft' && (
-          <div>
-            <h2 className="text-3xl font-light text-black mb-8">Manage Craft / Perfumery Section</h2>
-            <div className="p-8 rounded-2xl border border-black/10 bg-white">
-              <form onSubmit={handleUpdateCraft} className="space-y-6">
-                <div>
-                  <label className="block text-sm text-gray-600 mb-2">Section Title</label>
-                  <input type="text" value={craftTitle} onChange={e => setCraftTitle(e.target.value)} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-3 text-black outline-none focus:border-black/30" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-2">Section Subtitle</label>
-                  <textarea rows={3} value={craftSubtitle} onChange={e => setCraftSubtitle(e.target.value)} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-3 text-black outline-none focus:border-black/30" />
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm text-gray-600">Steps</label>
-                    <button type="button" onClick={addCraftStep} className="text-sm px-3 py-1 bg-black text-white rounded hover:bg-black/80">+ Add Step</button>
-                  </div>
-                  {craftSteps.map((step, index) => (
-                    <div key={step.id || index} className="border border-black/10 rounded-lg p-4 mb-3">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-sm font-medium text-black">Step {index + 1}</h4>
-                        <button type="button" onClick={() => removeCraftStep(index)} className="text-sm text-red-600 hover:text-red-800">Remove</button>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Step title"
-                        value={step.title}
-                        onChange={e => updateCraftStep(index, 'title', e.target.value)}
-                        className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30 mb-2"
-                      />
-                      <textarea
-                        placeholder="Step description"
-                        value={step.description}
-                        onChange={e => updateCraftStep(index, 'description', e.target.value)}
-                        className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30 mb-2"
-                        rows={2}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Image URL"
-                        value={step.imageUrl}
-                        onChange={e => updateCraftStep(index, 'imageUrl', e.target.value)}
-                        className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30 font-mono text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <button type="submit" disabled={craftLoading} className="bg-black text-white px-8 py-3 rounded-lg font-medium hover:bg-black/80 disabled:opacity-50">
-                  {craftLoading ? 'Saving...' : 'Save Changes'}
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Community Tab */}
-        {activeTab === 'community' && (
-          <div>
-            <h2 className="text-3xl font-light text-black mb-8">Manage Community / Influencers</h2>
-            <div className="p-8 rounded-2xl border border-black/10 bg-white">
-              <form onSubmit={handleUpdateCommunity} className="space-y-6">
-                <div>
-                  <label className="block text-sm text-gray-600 mb-2">Section Title</label>
-                  <input type="text" value={communityTitle} onChange={e => setCommunityTitle(e.target.value)} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-3 text-black outline-none focus:border-black/30" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-2">Section Subtitle</label>
-                  <textarea rows={3} value={communitySubtitle} onChange={e => setCommunitySubtitle(e.target.value)} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-3 text-black outline-none focus:border-black/30" />
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm text-gray-600">Influencers</label>
-                    <button type="button" onClick={addInfluencer} className="text-sm px-3 py-1 bg-black text-white rounded hover:bg-black/80">+ Add Influencer</button>
-                  </div>
-                  {communityInfluencers.map((inf, index) => (
-                    <div key={inf.id || index} className="border border-black/10 rounded-lg p-4 mb-3">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-sm font-medium text-black">Influencer {index + 1}</h4>
-                        <button type="button" onClick={() => removeInfluencer(index)} className="text-sm text-red-600 hover:text-red-800">Remove</button>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Name"
-                        value={inf.name}
-                        onChange={e => updateInfluencer(index, 'name', e.target.value)}
-                        className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30 mb-2"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Video URL"
-                        value={inf.videoUrl}
-                        onChange={e => updateInfluencer(index, 'videoUrl', e.target.value)}
-                        className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30 font-mono text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <button type="submit" disabled={communityLoading} className="bg-black text-white px-8 py-3 rounded-lg font-medium hover:bg-black/80 disabled:opacity-50">
-                  {communityLoading ? 'Saving...' : 'Save Changes'}
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Media Library Tab */}
-        {activeTab === 'media' && (
+        {activeTab === 'categories' && (
           <div>
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-light text-black">Media Library</h2>
-              <button onClick={openAddMediaModal} className="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-black/80">
-                + Add Media
+              <h2 className="text-3xl font-light text-black">Manage Categories</h2>
+              <button onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '', image_url: '' }); setCategoryImagePreview(''); setIsCategoryModalOpen(true); }} className="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-black/80">
+                + Add Category
               </button>
             </div>
             <div className="bg-white rounded-2xl border border-black/10 overflow-hidden">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-black/5 border-b border-black/10">
-                    <th className="p-4 text-sm font-medium text-black">Preview</th>
-                    <th className="p-4 text-sm font-medium text-black">Title / Description</th>
-                    <th className="p-4 text-sm font-medium text-black">Section</th>
+                    <th className="p-4 text-sm font-medium text-black">Name</th>
+                    <th className="p-4 text-sm font-medium text-black">Description</th>
                     <th className="p-4 text-sm font-medium text-black text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {mediaItems.length === 0 ? (
-                    <tr><td colSpan={4} className="p-8 text-center text-gray-500">No media found.</td></tr>
-                  ) : (
-                    mediaItems.map(m => (
-                      <tr key={m.id} className="border-b border-black/5 hover:bg-black/5 transition-colors">
-                        <td className="p-4">
-                          {m.url && (
-                            m.url.match(/\.(jpeg|jpg|png|webp)$/) ? (
-                              <img src={m.url} alt={m.title || ''} className="w-20 h-20 rounded object-cover" />
-                            ) : (
-                              <video src={m.url} className="w-20 h-20 rounded object-cover" />
-                            )
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <div className="font-medium text-black mb-1">{m.title || '-'}</div>
-                          <div className="text-sm text-gray-600">{m.description || '-'}</div>
-                        </td>
-                        <td className="p-4 text-gray-600">{m.section || '-'}</td>
-                        <td className="p-4 text-right">
-                          <button onClick={() => openEditMediaModal(m)} className="text-sm px-3 py-1 bg-gray-100 text-black rounded hover:bg-gray-200 mr-2">Edit</button>
-                          <button onClick={() => handleDeleteMedia(m.id)} className="text-sm px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">Delete</button>
-                          <div className="mt-2">
-                            <select
-                              onChange={(e) => e.target.value && assignMediaToSection(m, e.target.value)}
-                              className="text-xs bg-black/5 border border-black/10 rounded px-2 py-1 text-black"
-                              defaultValue=""
-                            >
-                              <option value="" disabled>Assign to...</option>
-                              <option value="product">Product</option>
-                              <option value="carousel">Carousel</option>
-                              <option value="craft">Craft</option>
-                              <option value="community">Community</option>
-                            </select>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                  {categories.map((c) => (
+                    <tr key={c.id} className="border-b border-black/5 hover:bg-black/5 transition-colors">
+                      <td className="p-4 font-medium text-black">{c.name}</td>
+                      <td className="p-4 text-gray-600">{c.description || '-'}</td>
+                      <td className="p-4 text-right">
+                        <button onClick={() => { setEditingCategory(c); setCategoryForm({ name: c.name, description: c.description || '', image_url: c.image_url || '' }); setCategoryImagePreview(c.image_url || ''); setIsCategoryModalOpen(true); }} className="text-sm px-3 py-1 bg-gray-100 text-black rounded hover:bg-gray-200 mr-2">Edit</button>
+                        <button onClick={() => handleDeleteCategory(c.id)} className="text-sm px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
         )}
+
+        {activeTab === 'users' && (
+          <div>
+            <h2 className="text-3xl font-light text-black mb-8">Manage Users</h2>
+            <div className="bg-white rounded-2xl border border-black/10 overflow-hidden mb-8">
+              <div className="p-6 border-b border-black/10">
+                <h3 className="text-lg font-medium">Pending Approval</h3>
+              </div>
+              {pendingUsers.length === 0 ? (
+                <p className="p-6 text-gray-500">No pending users.</p>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-black/5 border-b border-black/10">
+                      <th className="p-4 text-sm font-medium text-black">Email</th>
+                      <th className="p-4 text-sm font-medium text-black">Name</th>
+                      <th className="p-4 text-sm font-medium text-black">Role</th>
+                      <th className="p-4 text-sm font-medium text-black text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingUsers.map((u) => (
+                      <tr key={u.id} className="border-b border-black/5">
+                        <td className="p-4 font-medium text-black">{u.email}</td>
+                        <td className="p-4 text-gray-600">{u.full_name || '-'}</td>
+                        <td className="p-4 text-gray-600 capitalize">{u.role}</td>
+                        <td className="p-4 text-right">
+                          <button onClick={() => handleApproveUser(u.id)} className="text-sm px-3 py-1 bg-green-100 text-green-600 rounded hover:bg-green-200 mr-2">Approve</button>
+                          <button onClick={() => handleRejectUser(u.id)} className="text-sm px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">Reject</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Product Modal */}
       {isProductModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -640,20 +330,22 @@ export default function AdminDashboard() {
             </div>
             <form onSubmit={handleSaveProduct} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-600 mb-2">Product Name *</label>
-                <input type="text" value={productName} onChange={e => setProductName(e.target.value)} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-2">Tag (e.g. "50ml • Earthy & Warm")</label>
-                <input type="text" value={productTag} onChange={e => setProductTag(e.target.value)} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
+                <label className="block text-sm text-gray-600 mb-2">Name *</label>
+                <input type="text" value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} required className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
               </div>
               <div>
                 <label className="block text-sm text-gray-600 mb-2">Description</label>
-                <textarea value={productDesc} onChange={e => setProductDesc(e.target.value)} rows={3} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
+                <textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} rows={3} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-2">Product Image {editingProduct && '(Leave blank to keep current)'}</label>
-                <input type="file" accept="image/*" onChange={e => setProductImage(e.target.files?.[0] || null)} className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-black file:text-white hover:file:bg-black/80" />
+                <label className="block text-sm text-gray-600 mb-2">Price *</label>
+                <input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} required className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-2">Product Image</label>
+                <input type="file" accept="image/*" onChange={(e) => { void handleProductImageUpload(e.target.files?.[0]); }} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
+                <input type="text" value={productForm.image_url} onChange={(e) => { setProductForm({ ...productForm, image_url: e.target.value }); setProductImagePreview(e.target.value); }} className="w-full mt-3 bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30 font-mono text-sm" placeholder="Or paste an image URL" />
+                {productImagePreview && <img src={productImagePreview} alt="Product preview" className="mt-3 w-24 h-24 rounded object-cover border border-black/10" />}
               </div>
               <button type="submit" disabled={loading} className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-black/80 disabled:opacity-50 mt-6">
                 {loading ? 'Saving...' : 'Save Product'}
@@ -663,50 +355,30 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Media Modal */}
-      {isMediaModalOpen && (
+      {isCategoryModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-light text-black">{editingMedia ? 'Edit Media' : 'Add New Media'}</h2>
-              <button onClick={() => setIsMediaModalOpen(false)} className="text-gray-500 hover:text-black">✕</button>
+              <h2 className="text-2xl font-light text-black">{editingCategory ? 'Edit Category' : 'Add New Category'}</h2>
+              <button onClick={() => setIsCategoryModalOpen(false)} className="text-gray-500 hover:text-black">✕</button>
             </div>
-            <form onSubmit={handleSaveMedia} className="space-y-4">
+            <form onSubmit={handleSaveCategory} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-600 mb-2">Image URL *</label>
-                <input
-                  type="text"
-                  value={mediaUrl}
-                  onChange={e => setMediaUrl(e.target.value)}
-                  className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30 font-mono text-sm"
-                  placeholder="https://example.com/image.webp"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-2">Or upload from device</label>
-                <input type="file" accept="image/*" onChange={handleMediaFileChange} className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-black file:text-white hover:file:bg-black/80" />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-2">Title</label>
-                <input type="text" value={mediaTitle} onChange={e => setMediaTitle(e.target.value)} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
+                <label className="block text-sm text-gray-600 mb-2">Name *</label>
+                <input type="text" value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} required className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
               </div>
               <div>
                 <label className="block text-sm text-gray-600 mb-2">Description</label>
-                <textarea value={mediaDescription} onChange={e => setMediaDescription(e.target.value)} rows={3} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
+                <textarea value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} rows={3} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-2">Assign to Section</label>
-                <select value={mediaSection} onChange={e => setMediaSection(e.target.value)} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30">
-                  <option value="">-- Select Section --</option>
-                  <option value="product">Product</option>
-                  <option value="hero">Hero</option>
-                  <option value="carousel">Carousel</option>
-                  <option value="craft">Craft / Perfumery</option>
-                  <option value="community">Community</option>
-                </select>
+                <label className="block text-sm text-gray-600 mb-2">Category Image</label>
+                <input type="file" accept="image/*" onChange={(e) => { void handleCategoryImageUpload(e.target.files?.[0]); }} className="w-full bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30" />
+                <input type="text" value={categoryForm.image_url} onChange={(e) => { setCategoryForm({ ...categoryForm, image_url: e.target.value }); setCategoryImagePreview(e.target.value); }} className="w-full mt-3 bg-black/5 border border-black/10 rounded-lg px-4 py-2 text-black outline-none focus:border-black/30 font-mono text-sm" placeholder="Or paste an image URL" />
+                {categoryImagePreview && <img src={categoryImagePreview} alt="Category preview" className="mt-3 w-24 h-24 rounded object-cover border border-black/10" />}
               </div>
-              <button type="submit" className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-black/80 mt-6">
-                Save Media
+              <button type="submit" disabled={loading} className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-black/80 disabled:opacity-50 mt-6">
+                {loading ? 'Saving...' : 'Save Category'}
               </button>
             </form>
           </div>

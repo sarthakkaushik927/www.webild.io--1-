@@ -3,18 +3,26 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Collection from './components/Collection';
 import Craft from './components/Craft';
-import Community from './components/Community';
-import Journal from './components/Journal';
 import Faq from './components/Faq';
-import Contact from './components/Contact';
 import Footer from './components/Footer';
 import NotFound from './pages/NotFound';
 
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminOrders from './pages/AdminOrders';
+import AdminApiKeys from './pages/AdminApiKeys';
+import AdminContent from './pages/AdminContent';
 import About from './pages/About';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
+import ContactPage from './pages/ContactPage';
+import Checkout from './pages/Checkout';
+import OrderTracking from './pages/OrderTracking';
+import CustomerLogin from './pages/CustomerLogin';
+import CartSidebar from './components/cart/CartSidebar';
+import WhatsAppButton from './components/WhatsAppButton';
+import Chatbot from './components/Chatbot';
+import { CartProvider } from './stores/cartStore';
 
 function Home() {
   return (
@@ -22,10 +30,7 @@ function Home() {
       <Hero />
       <Collection />
       <Craft />
-      <Community />
-      <Journal />
       <Faq />
-      <Contact />
     </>
   );
 }
@@ -37,13 +42,23 @@ function AppContent() {
   return (
     <div className="lenis lenis-scrolling">
       {!isAdmin && <Navbar />}
+      <CartSidebar />
+      {!isAdmin && <WhatsAppButton />}
+      {!isAdmin && <Chatbot />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/products" element={<Products />} />
         <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/order/:trackingToken" element={<OrderTracking />} />
+        <Route path="/login" element={<CustomerLogin />} />
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/content" element={<AdminContent />} />
+        <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin/api-keys" element={<AdminApiKeys />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {!isAdmin && <Footer />}
@@ -53,8 +68,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
-  )
+    <CartProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </CartProvider>
+  );
 }
