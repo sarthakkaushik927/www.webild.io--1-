@@ -2,23 +2,26 @@ import express from 'express';
 import cors from 'cors';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import { firestoreDb, doc, updateDoc, getDoc } from '../config/firebase.js';
+import { supabase } from '../lib/supabase.js';
 
 const router = express.Router();
 
 async function getRazorpayConfig() {
   try {
-    const docRef = doc(firestoreDb, 'api_configs', 'payment_api_key');
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const data = docSnap.data();
+    const { data, error } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'payment_api_key')
+      .single();
+
+    if (data?.value) {
       return {
-        key_id: data.key || process.env.RAZORPAY_KEY_ID,
-        key_secret: data.value || process.env.RAZORPAY_KEY_SECRET,
+        key_id: data.value.key || process.env.RAZORPAY_KEY_ID,
+        key_secret: data.value.value || process.env.RAZORPAY_KEY_SECRET,
       };
     }
   } catch (error) {
-    console.error('Failed to fetch Razorpay config from Firestore, using env vars:', error);
+    console.error('Failed to fetch Razorpay config from Supabase, using env vars:', error);
   }
   return {
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -61,7 +64,7 @@ router.get('/key', async (req, res) => {
 
 router.post('/verify', async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id } = req.body;
     const config = await getRazorpayConfig();
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
@@ -71,11 +74,24 @@ router.post('/verify', async (req, res) => {
       .digest('hex');
 
     if (expectedSignature === razorpay_signature) {
+      if (order_id) {
+        await supabase
+          .from('orders')
+          .update({
+            razorpay_order_id,
+            razorpay_payment_id,
+            payment_status: 'paid',
+            status: 'confirmed',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', order_id);
+      }
       res.json({ success: true, message: 'Payment verified' });
     } else {
       res.status(400).json({ success: false, message: 'Invalid signature' });
     }
   } catch (error) {
+    console.error('Payment verification error:', error);
     res.status(500).json({ error: 'Verification failed' });
   }
 });
@@ -107,23 +123,27 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     if (eventType === 'payment.captured' && payment) {
       const orderId = payment.notes?.order_id || payment.order_id;
       if (orderId) {
-        const orderRef = doc(firestoreDb, 'orders', orderId);
-        await updateDoc(orderRef, {
-          payment_status: 'paid',
-          razorpay_payment_id: payment.id,
-          status: 'confirmed',
-          updated_at: new Date().toISOString(),
-        });
+        await supabase
+          .from('orders')
+          .update({
+            payment_status: 'paid',
+            razorpay_payment_id: payment.id,
+            status: 'confirmed',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', orderId);
       }
     } else if (eventType === 'payment.failed' && payment) {
       const orderId = payment.notes?.order_id || payment.order_id;
       if (orderId) {
-        const orderRef = doc(firestoreDb, 'orders', orderId);
-        await updateDoc(orderRef, {
-          payment_status: 'failed',
-          status: 'cancelled',
-          updated_at: new Date().toISOString(),
-        });
+        await supabase
+          .from('orders')
+          .update({
+            payment_status: 'failed',
+            status: 'cancelled',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', orderId);
       }
     }
 

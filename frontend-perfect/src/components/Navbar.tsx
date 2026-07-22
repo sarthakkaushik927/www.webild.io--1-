@@ -1,9 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CartTrigger from '../components/cart/CartTrigger';
+import { supabase } from '../lib/supabase';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <>
@@ -15,6 +27,18 @@ export default function Navbar() {
               Order Now
             </Link>
             <CartTrigger />
+            <Link to="/orders" className="hidden sm:flex items-center justify-center h-10 px-4 text-sm rounded cursor-pointer primary-button text-primary-cta-text">
+              Orders
+            </Link>
+            {user ? (
+              <Link to="/account" className="flex items-center justify-center h-10 px-4 text-sm rounded cursor-pointer primary-button text-primary-cta-text">
+                Account
+              </Link>
+            ) : (
+              <Link to="/login" className="flex items-center justify-center h-10 px-4 text-sm rounded cursor-pointer primary-button text-primary-cta-text">
+                Login
+              </Link>
+            )}
             <div
               onClick={() => setIsOpen(!isOpen)}
               className="relative flex items-center justify-center size-9 rounded cursor-pointer primary-button"
@@ -28,9 +52,13 @@ export default function Navbar() {
                 <span className="text-primary-cta-text font-light text-sm">✕</span>
               )}
             </div>
-            
+
             {isOpen && (
               <div className="absolute top-full right-0 mt-2 w-56 bg-[#4A2B2B] text-[#F3F0EB] rounded-2xl shadow-xl overflow-hidden py-2 z-[1001] animate-in fade-in slide-in-from-top-4 duration-200">
+                <Link to="/orders" onClick={() => setIsOpen(false)} className="flex items-center justify-between px-6 py-4 hover:bg-white/10 transition-colors border-b border-white/10 text-sm">
+                  <span>My Orders & Tracking</span>
+                  <span>↗</span>
+                </Link>
                 <Link to="/products" onClick={() => setIsOpen(false)} className="flex items-center justify-between px-6 py-4 hover:bg-white/10 transition-colors border-b border-white/10 text-sm">
                   <span>Products</span>
                   <span>↗</span>

@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminService, productService, categoryService } from '../services/firebaseService';
 import { adminAuthService } from '../services/adminAuthService';
-import type { Profile, Product, Category } from '../lib/firebase';
+import { uploadService } from '../services/uploadService';
+
+import type { Profile, Product, Category } from '../lib/supabase';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -11,7 +13,7 @@ export default function AdminDashboard() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [pendingUsers, setPendingUsers] = useState<Profile[]>([]);
+  const [allUsers, setAllUsers] = useState<Profile[]>([]);
 
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -33,7 +35,7 @@ export default function AdminDashboard() {
     if (activeTab === 'products') loadProducts();
     if (activeTab === 'categories') loadCategories();
     if (activeTab === 'users') {
-      loadPendingUsers();
+      loadAllUsers();
     }
   }, [activeTab]);
 
@@ -49,25 +51,28 @@ export default function AdminDashboard() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const fileToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ''));
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsDataURL(file);
-  });
-
   const handleProductImageUpload = async (file?: File | null) => {
     if (!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    setProductForm((current) => ({ ...current, image_url: dataUrl }));
-    setProductImagePreview(dataUrl);
+    try {
+      const result = await uploadService.uploadImage(file);
+      setProductForm((current) => ({ ...current, image_url: result.url }));
+      setProductImagePreview(result.url);
+    } catch (err) {
+      console.error(err);
+      showToast('Image upload failed', 'error');
+    }
   };
 
   const handleCategoryImageUpload = async (file?: File | null) => {
     if (!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    setCategoryForm((current) => ({ ...current, image_url: dataUrl }));
-    setCategoryImagePreview(dataUrl);
+    try {
+      const result = await uploadService.uploadImage(file);
+      setCategoryForm((current) => ({ ...current, image_url: result.url }));
+      setCategoryImagePreview(result.url);
+    } catch (err) {
+      console.error(err);
+      showToast('Image upload failed', 'error');
+    }
   };
 
   const loadProducts = async () => {
@@ -80,27 +85,26 @@ export default function AdminDashboard() {
     if (data) setCategories(data as Category[]);
   };
 
-  const loadPendingUsers = async () => {
-    const { data } = await adminService.getPendingUsers();
-    if (data) setPendingUsers(data as Profile[]);
+  const loadAllUsers = async () => {
+    const { data } = await adminService.getAllUsers();
+    if (data) setAllUsers(data as Profile[]);
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      const payload = {
+        ...productForm,
+        price: parseFloat(productForm.price),
+        category_id: productForm.category_id ? productForm.category_id : null,
+        is_available: true,
+      };
       if (editingProduct) {
-        await productService.update(editingProduct.id, {
-          ...productForm,
-          price: parseFloat(productForm.price),
-        });
+        await productService.update(editingProduct.id, payload);
         showToast('Product updated', 'success');
       } else {
-        await productService.create({
-          ...productForm,
-          price: parseFloat(productForm.price),
-          is_available: true,
-        });
+        await productService.create(payload);
         showToast('Product created', 'success');
       }
       setIsProductModalOpen(false);
@@ -144,14 +148,15 @@ export default function AdminDashboard() {
     loadCategories();
   };
 
-  const handleApproveUser = async (id: string) => {
-    await adminService.approveUser(id);
-    loadPendingUsers();
-  };
-
-  const handleRejectUser = async (id: string) => {
-    await adminService.rejectUser(id);
-    loadPendingUsers();
+  const handleDeleteUser = async (id: string) => {
+    if (!confirm('Delete this user? This action cannot be undone.')) return;
+    try {
+      await adminService.deleteUser(id);
+      showToast('User deleted', 'success');
+      loadAllUsers();
+    } catch (err) {
+      showToast('Failed to delete user', 'error');
+    }
   };
 
   const handleLogout = async () => {
@@ -287,29 +292,30 @@ export default function AdminDashboard() {
             <h2 className="text-3xl font-light text-black mb-8">Manage Users</h2>
             <div className="bg-white rounded-2xl border border-black/10 overflow-hidden mb-8">
               <div className="p-6 border-b border-black/10">
-                <h3 className="text-lg font-medium">Pending Approval</h3>
+                <h3 className="text-lg font-medium">All Users</h3>
               </div>
-              {pendingUsers.length === 0 ? (
-                <p className="p-6 text-gray-500">No pending users.</p>
+              {allUsers.length === 0 ? (
+                <p className="p-6 text-gray-500">No users found.</p>
               ) : (
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-black/5 border-b border-black/10">
                       <th className="p-4 text-sm font-medium text-black">Email</th>
                       <th className="p-4 text-sm font-medium text-black">Name</th>
+                      <th className="p-4 text-sm font-medium text-black">Phone</th>
                       <th className="p-4 text-sm font-medium text-black">Role</th>
                       <th className="p-4 text-sm font-medium text-black text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {pendingUsers.map((u) => (
+                    {allUsers.map((u) => (
                       <tr key={u.id} className="border-b border-black/5">
                         <td className="p-4 font-medium text-black">{u.email}</td>
                         <td className="p-4 text-gray-600">{u.full_name || '-'}</td>
+                        <td className="p-4 text-gray-600">{u.phone || '-'}</td>
                         <td className="p-4 text-gray-600 capitalize">{u.role}</td>
                         <td className="p-4 text-right">
-                          <button onClick={() => handleApproveUser(u.id)} className="text-sm px-3 py-1 bg-green-100 text-green-600 rounded hover:bg-green-200 mr-2">Approve</button>
-                          <button onClick={() => handleRejectUser(u.id)} className="text-sm px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">Reject</button>
+                          <button onClick={() => handleDeleteUser(u.id)} className="text-sm px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">Delete</button>
                         </td>
                       </tr>
                     ))}

@@ -1,6 +1,7 @@
 import express from 'express';
 import { OrderModel } from '../models/OrderModel.js';
-import { firestoreDb, collection } from '../config/firebase.js';
+import { supabase } from '../lib/supabase.js';
+import { requireStaff } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -45,22 +46,12 @@ router.post('/', async (req, res) => {
       razorpay_order_id: razorpayOrderId,
       razorpay_payment_id: razorpayPaymentId,
       notes: null,
-      order_items: items.map((item) => ({
-        product_id: item.product_id,
-        product_name: item.product_name,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        total_price: item.total_price,
-      })),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     };
 
     const createdOrder = await OrderModel.create(orderData);
 
-    for (const item of items) {
-      const { addDoc } = await import('../config/firebase.js');
-      await addDoc(collection(firestoreDb, 'order_items'), {
+    if (items.length > 0) {
+      const orderItems = items.map((item) => ({
         order_id: createdOrder.id,
         product_id: item.product_id,
         product_name: item.product_name,
@@ -68,7 +59,13 @@ router.post('/', async (req, res) => {
         unit_price: item.unit_price,
         total_price: item.total_price,
         created_at: new Date().toISOString(),
-      });
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
     }
 
     res.status(201).json(createdOrder);
@@ -126,7 +123,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.put('/:orderId/status', async (req, res) => {
+router.put('/:orderId/status', requireStaff, async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status } = req.body;

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { CartItem } from '../lib/firebase';
+import type { CartItem } from '../lib/supabase';
 
 interface CartStore {
   items: CartItem[];
@@ -47,6 +47,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return [...prev, item];
     });
   }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<any>).detail;
+      if (!detail) return;
+      const cartItem: CartItem = {
+        id: crypto.randomUUID(),
+        product_id: detail.id,
+        name: detail.name,
+        price: Number(detail.price || 0),
+        quantity: 1,
+        image_url: detail.image_url || null,
+      };
+      addItem(cartItem);
+    };
+    window.addEventListener('add-to-cart', handler as EventListener);
+    return () => window.removeEventListener('add-to-cart', handler as EventListener);
+  }, [addItem]);
 
   const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));

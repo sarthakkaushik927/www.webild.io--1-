@@ -14,20 +14,31 @@ const defaultImages: CarouselImage[] = [
   { url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/hero-6.webp', alt: 'Product showcase 5' },
 ];
 
+const HERO_CACHE_KEY = 'hero-carousel-timestamp';
+
 export default function Hero() {
   const [images, setImages] = useState<CarouselImage[]>(defaultImages);
-  const [activeIndex, setActiveIndex] = useState(2); // center image
+  const [activeIndex, setActiveIndex] = useState(2);
+  const [revision, setRevision] = useState(() => Number(localStorage.getItem(HERO_CACHE_KEY) || '0'));
 
   useEffect(() => {
-    apiGet<{ title?: string; subtitle?: string; images?: string[] }>('/api/hero')
-      .then((data) => {
-        if (data?.images && data.images.length > 0) {
-          setImages(data.images.map((url, index) => ({ url, alt: `Hero image ${index + 1}` })));
-          setActiveIndex(Math.floor(data.images.length / 2));
-        }
-      })
-      .catch(console.error);
+    const handler = () => setRevision(Number(localStorage.getItem(HERO_CACHE_KEY) || '0'));
+    window.addEventListener('hero-carousel-updated', handler);
+    return () => window.removeEventListener('hero-carousel-updated', handler);
   }, []);
+
+  useEffect(() => {
+    apiGet<{ images?: string[] }>('/api/carousel')
+      .then((carouselData) => {
+        const source = (carouselData?.images && carouselData.images.length > 0) ? carouselData.images : defaultImages.map(img => img.url);
+        setImages(source.map((url, index) => ({ url, alt: `Hero image ${index + 1}` })));
+        setActiveIndex(Math.floor(source.length / 2));
+      })
+      .catch(() => {
+        setImages(defaultImages);
+        setActiveIndex(Math.floor(defaultImages.length / 2));
+      });
+  }, [revision]);
 
   // Auto-rotate carousel
   const nextSlide = useCallback(() => {

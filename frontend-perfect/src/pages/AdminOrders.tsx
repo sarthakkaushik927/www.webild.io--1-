@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orderService } from '../services/orderService';
 import { adminAuthService } from '../services/adminAuthService';
-import type { Order } from '../lib/firebase';
+import type { Order } from '../lib/supabase';
 import OrderDetailsModal from './OrderDetailsModal';
 
 export default function AdminOrders() {

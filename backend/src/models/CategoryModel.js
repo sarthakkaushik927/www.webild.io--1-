@@ -1,32 +1,69 @@
-import { firestoreDb, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, query, orderBy } from '../config/firebase.js';
+import { supabase } from '../lib/supabase.js';
 
 export class CategoryModel {
-  static getCollectionRef() {
-    return collection(firestoreDb, 'categories');
+  static async getAll() {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('display_order', { ascending: true })
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
   }
 
-  static async getAll() {
-    const q = query(this.getCollectionRef(), orderBy('name', 'asc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  static async getById(id) {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) return null;
+    return data;
   }
 
   static async create(data) {
-    const docRef = doc(this.getCollectionRef());
-    const payload = { ...data, created_at: new Date().toISOString() };
-    await setDoc(docRef, payload);
-    return { id: docRef.id, ...payload };
+    const payload = {
+      ...data,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: result, error } = await supabase
+      .from('categories')
+      .insert([payload])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return result;
   }
 
   static async update(id, data) {
-    const docRef = doc(firestoreDb, 'categories', id);
-    await updateDoc(docRef, { ...data, updated_at: new Date().toISOString() });
-    const docSnap = await getDoc(docRef);
-    return { id: docSnap.id, ...docSnap.data() };
+    const payload = {
+      ...data,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: result, error } = await supabase
+      .from('categories')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return result;
   }
 
   static async delete(id) {
-    await deleteDoc(doc(firestoreDb, 'categories', id));
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
     return { id };
   }
 }

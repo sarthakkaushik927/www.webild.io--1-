@@ -1,6 +1,5 @@
 import { apiGet, apiPut, apiPostAuth, apiPutAuth, apiDeleteAuth } from '../utils/api';
-import { get, ref } from 'firebase/database';
-import { realtimeDb } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 
 export interface SiteSettings {
   whatsapp_number: string;
@@ -20,21 +19,14 @@ const DEFAULT_SETTINGS: SiteSettings = {
   whatsapp_message: 'Hi, I have a question about your products.',
 };
 
-async function getRealtimeSettings(): Promise<SiteSettings> {
-  const snapshot = await get(ref(realtimeDb, 'settings'));
-  if (!snapshot.exists()) return DEFAULT_SETTINGS;
-
-  return { ...DEFAULT_SETTINGS, ...(snapshot.val() as Partial<SiteSettings>) };
-}
-
 export const settingsService = {
   async getWhatsAppNumber(): Promise<string> {
     try {
       const data = await apiGet<SiteSettings>('/api/settings/settings');
       return data.whatsapp_number || '';
     } catch (err) {
-      const data = await getRealtimeSettings();
-      return data.whatsapp_number || '';
+      console.error('Failed to fetch WhatsApp number:', err);
+      return '';
     }
   },
 
@@ -55,7 +47,8 @@ export const settingsService = {
       const data = await apiGet<SiteSettings>('/api/settings/settings');
       return data || DEFAULT_SETTINGS;
     } catch (err) {
-      return getRealtimeSettings();
+      console.error('Failed to load settings:', err);
+      return DEFAULT_SETTINGS;
     }
   },
 };
@@ -83,7 +76,7 @@ export const apiConfigService = {
 
   async save(config: ApiConfig) {
     try {
-      const token = (await import('../services/adminAuthService')).adminAuthService.getToken();
+      const token = (await import('./adminAuthService')).adminAuthService.getToken();
       if (!token) throw new Error('Admin session missing');
 
       if (config.id) {
@@ -100,7 +93,7 @@ export const apiConfigService = {
 
   async delete(id: string) {
     try {
-      const token = (await import('../services/adminAuthService')).adminAuthService.getToken();
+      const token = (await import('./adminAuthService')).adminAuthService.getToken();
       if (!token) throw new Error('Admin session missing');
       await apiDeleteAuth(`/api/settings/api-configs/${id}`, token);
     } catch (err) {

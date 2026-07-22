@@ -1,16 +1,19 @@
-import { firestoreDb, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, orderBy } from '../config/firebase.js';
-
-const SETTINGS_REF = doc(firestoreDb, 'settings', 'site');
-const API_CONFIGS_REF = collection(firestoreDb, 'api_configs');
+import { supabase } from '../lib/supabase.js';
 
 export class SettingsController {
   static async getSettings(req, res) {
     try {
-      const docSnap = await getDoc(SETTINGS_REF);
-      if (docSnap.exists()) {
-        return res.json(docSnap.data());
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'site')
+        .single();
+
+      if (error || !data) {
+        return res.json({ whatsapp_number: '', whatsapp_message: '' });
       }
-      return res.json({ whatsapp_number: '', whatsapp_message: '' });
+
+      return res.json(data.value || { whatsapp_number: '', whatsapp_message: '' });
     } catch (error) {
       console.error('Failed to load settings:', error);
       res.status(200).json({ whatsapp_number: '', whatsapp_message: '' });
@@ -20,10 +23,21 @@ export class SettingsController {
   static async updateSettings(req, res) {
     try {
       const { whatsapp_number, whatsapp_message } = req.body;
-      await setDoc(SETTINGS_REF, {
-        whatsapp_number,
-        whatsapp_message: whatsapp_message || 'Hi, I have a question about your products.',
-      });
+
+      const { data, error } = await supabase
+        .from('settings')
+        .upsert({
+          key: 'site',
+          value: {
+            whatsapp_number,
+            whatsapp_message: whatsapp_message || 'Hi, I have a question about your products.',
+          },
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'key' })
+        .select()
+        .single();
+
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       console.error('Failed to save settings:', error);
@@ -33,9 +47,18 @@ export class SettingsController {
 
   static async getApiConfigs(req, res) {
     try {
-      const q = query(API_CONFIGS_REF, orderBy('updated_at', 'desc'));
-      const snapshot = await getDocs(q);
-      const configs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      const configs = (data || []).map(item => ({
+        id: item.id,
+        key: item.key,
+        value: item.value,
+        updated_at: item.updated_at,
+      }));
       return res.json(configs);
     } catch (error) {
       console.error('Failed to load API configs:', error);
@@ -46,10 +69,14 @@ export class SettingsController {
   static async createApiConfig(req, res) {
     try {
       const config = req.body;
-      const docRef = doc(API_CONFIGS_REF);
-      const payload = { ...config, updated_at: new Date().toISOString() };
-      await setDoc(docRef, payload);
-      res.status(201).json({ id: docRef.id, ...payload });
+      const { data: result, error } = await supabase
+        .from('settings')
+        .insert([{ ...config, updated_at: new Date().toISOString() }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      res.status(201).json(result);
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -59,10 +86,16 @@ export class SettingsController {
     try {
       const { id } = req.params;
       const config = req.body;
-      const docRef = doc(firestoreDb, 'api_configs', id);
-      await updateDoc(docRef, { ...config, updated_at: new Date().toISOString() });
-      const docSnap = await getDoc(docRef);
-      res.json({ id: docSnap.id, ...docSnap.data() });
+
+      const { data: result, error } = await supabase
+        .from('settings')
+        .update({ ...config, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      res.json(result);
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -71,7 +104,12 @@ export class SettingsController {
   static async deleteApiConfig(req, res) {
     try {
       const { id } = req.params;
-      await deleteDoc(doc(firestoreDb, 'api_configs', id));
+      const { error } = await supabase
+        .from('settings')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: error.message });

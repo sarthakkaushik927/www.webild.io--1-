@@ -1,39 +1,64 @@
-import { firestoreDb, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc } from '../config/firebase.js';
+import { supabase } from '../lib/supabase.js';
 
 export class MediaModel {
   static getRef() {
-    return collection(firestoreDb, 'media');
+    return 'media';
   }
 
   static async getAll() {
-    const snapshot = await getDocs(this.getRef());
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    const { data, error } = await supabase
+      .from('media')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
   }
 
   static async getById(id) {
-    const docRef = doc(firestoreDb, 'media', id);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() };
-    }
-    return null;
+    const { data, error } = await supabase
+      .from('media')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) return null;
+    return data;
   }
 
   static async create(data) {
-    const docRef = doc(this.getRef());
-    await setDoc(docRef, data);
-    return { id: docRef.id, ...data };
+    const { data: result, error } = await supabase
+      .from('media')
+      .insert([{
+        ...data,
+        created_at: new Date().toISOString(),
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return result;
   }
 
   static async update(id, data) {
-    const docRef = doc(firestoreDb, 'media', id);
-    await updateDoc(docRef, data);
-    const docSnap = await getDoc(docRef);
-    return { id: docSnap.id, ...docSnap.data() };
+    const { data: result, error } = await supabase
+      .from('media')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return result;
   }
 
   static async delete(id) {
-    await deleteDoc(doc(firestoreDb, 'media', id));
+    const { error } = await supabase
+      .from('media')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
     return { id };
   }
 }

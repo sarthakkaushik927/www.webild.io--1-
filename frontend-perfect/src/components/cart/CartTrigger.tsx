@@ -4,19 +4,14 @@ import { useNavigate } from 'react-router-dom';
 
 export default function CartTrigger() {
   const { getTotalItems, openCart } = useCartStore();
-  const navigate = useNavigate();
   const totalItems = getTotalItems();
 
   return (
     <button
-      onClick={() => {
-        if (totalItems === 0) {
-          navigate('/products');
-        } else {
-          openCart();
-        }
-      }}
+      type="button"
+      onClick={openCart}
       className="relative p-2 rounded-full hover:bg-black/5 transition-colors"
+      aria-label="Open Cart"
     >
       <ShoppingBag className="w-6 h-6" />
       {totalItems > 0 && (

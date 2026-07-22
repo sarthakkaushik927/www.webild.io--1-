@@ -1,7 +1,7 @@
 import { useCartStore } from '../../stores/cartStore';
 import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { CartItem } from '../../lib/firebase';
+import type { CartItem } from '../../lib/supabase';
 
 export default function CartSidebar() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, getSubtotal } = useCartStore();

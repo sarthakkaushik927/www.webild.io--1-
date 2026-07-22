@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../lib/firebase';
-import { authService } from '../services/firebaseService';
 import { useCartStore } from '../stores/cartStore';
-import { paymentService } from '../services/paymentService';
 import { orderService } from '../services/orderService';
+import { paymentService } from '../services/paymentService';
 import { apiPost } from '../utils/api';
-import type { Profile } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
+import { authService } from '../services/firebaseService';
+
+import type { Profile } from '../lib/supabase';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -33,19 +34,19 @@ export default function Checkout() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const user = auth.currentUser;
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         navigate('/login');
         return;
       }
       try {
-        const { data } = await authService.getProfile(user.uid);
-        if (data) {
-          setProfile(data);
+        const result = await authService.getProfile(user.id);
+        if (result.data) {
+          setProfile(result.data);
           setForm((f) => ({
             ...f,
-            name: data.full_name || '',
-            phone: data.phone || '',
+            name: result.data!.full_name || '',
+            phone: result.data!.phone || '',
             email: user.email || '',
           }));
         }
@@ -84,9 +85,10 @@ export default function Checkout() {
 
     setProcessing(true);
     try {
-      const customerId = auth.currentUser?.uid || 'guest_' + Date.now();
+      const { data: { user } } = await supabase.auth.getUser();
+      const customerId = user?.id || 'guest_' + Date.now();
       
-      const createdOrder = await orderService.createOrder({
+      const { data: createdOrder } = await orderService.createOrder({
         customerId,
         customerName: form.name,
         customerPhone: form.phone,
@@ -107,6 +109,14 @@ export default function Checkout() {
         total,
         loyaltyCoinsEarned: Math.floor(total / 2),
       });
+
+      // Save token locally for guest / customer tracking history
+      try {
+        const stored = JSON.parse(localStorage.getItem('my_order_tokens') || '[]');
+        localStorage.setItem('my_order_tokens', JSON.stringify([createdOrder.tracking_token, ...stored]));
+      } catch {
+        // ignore storage errors
+      }
 
       const { razorpayOrder } = await paymentService.createRazorpayOrder({
         amount: total,
@@ -136,6 +146,7 @@ export default function Checkout() {
           razorpay_order_id: result.razorpay_order_id,
           razorpay_payment_id: result.razorpay_payment_id,
           razorpay_signature: result.razorpay_signature,
+          order_id: createdOrder.id,
         });
 
         if (!verification.success) {

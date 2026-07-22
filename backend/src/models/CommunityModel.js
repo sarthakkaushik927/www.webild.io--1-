@@ -1,4 +1,4 @@
-import { realtimeRequest } from '../utils/realtimeDatabase.js';
+import { supabase } from '../lib/supabase.js';
 
 const defaultCommunity = {
   title: 'Loved By Snack Enthusiasts Everywhere',
@@ -8,8 +8,21 @@ const defaultCommunity = {
 
 export class CommunityModel {
   static async get() {
-    const community = await realtimeRequest('community');
-    return community ? { ...defaultCommunity, ...community } : defaultCommunity;
+    const { data, error } = await supabase
+      .from('cms_sections')
+      .select('*')
+      .eq('section_key', 'community')
+      .single();
+
+    if (error || !data) {
+      return defaultCommunity;
+    }
+
+    return {
+      title: data.title || defaultCommunity.title,
+      subtitle: data.subtitle || defaultCommunity.subtitle,
+      influencers: Array.isArray(data.influencers) && data.influencers.length > 0 ? data.influencers : defaultCommunity.influencers,
+    };
   }
 
   static async update(data) {

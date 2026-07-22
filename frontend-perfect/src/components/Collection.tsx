@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productService } from '../services/firebaseService';
-import type { Product } from '../lib/firebase';
 
+import type { Product } from '../lib/supabase';
 const fallbackProducts: Product[] = [
   { id: 'f1', name: 'Banana Chips', description: 'Fresh & Crunchy Snack!', price: 120, image_url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-1.webp', is_available: true, tags: [], created_at: new Date(), category_id: null },
   { id: 'f2', name: 'Chana', description: 'Nutritious & Tasty!', price: 100, image_url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-2.webp', is_available: true, tags: [], created_at: new Date(), category_id: null },
@@ -61,38 +61,56 @@ export default function Collection() {
     scrollToIndex(index);
   };
 
-  const renderProductCard = (p: Product, i: number) => (
-    <button
-      key={p.id || i}
-      onClick={() => navigate('/products/' + p.id)}
-      className="group flex flex-col gap-3 xl:gap-3.5 2xl:gap-4 p-3 xl:p-3.5 2xl:p-4 text-left card rounded cursor-pointer w-full"
-    >
-      <div className="relative aspect-[4/5] overflow-hidden rounded">
-        <img
-          alt={p.name}
-          className="min-h-0 rounded size-full object-cover transition-transform duration-500 group-hover:scale-105"
-          src={p.image_url || `https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-${(i%4)+1}.webp`} loading="lazy"
-        />
-        <div
-          className="absolute inset-0 flex items-center justify-center group-hover:bg-background/20 group-hover:backdrop-blur-xs transition-all duration-300">
-          <div
-            className="flex items-center justify-center size-12 rounded-full primary-button opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-300">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              className="lucide lucide-arrow-up-right size-5 text-primary-cta-text" aria-hidden="true">
-              <path d="M7 7h10v10"></path>
-              <path d="M7 17 17 7"></path>
-            </svg></div>
+  const renderProductCard = (p: Product, i: number) => {
+    const handleAddToCart = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      window.dispatchEvent(new CustomEvent('add-to-cart', { detail: p }));
+    };
+
+    return (
+      <div
+        key={p.id || i}
+        onClick={() => navigate('/products/' + p.id)}
+        className="group flex flex-col bg-white rounded-2xl border border-black/5 overflow-hidden cursor-pointer w-full hover:shadow-md transition-all duration-300"
+      >
+        <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
+          <img
+            alt={p.name}
+            className="min-h-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            src={p.image_url || `https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-${(i%4)+1}.webp`} loading="lazy"
+          />
+        </div>
+        <div className="flex flex-col gap-3 p-4 xl:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-1 flex-1 min-w-0">
+              <h3 className="text-base font-semibold text-black leading-snug text-balance line-clamp-2">{p.name}</h3>
+              {p.description && (
+                <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">{p.description}</p>
+              )}
+            </div>
+            <span className="shrink-0 text-base font-semibold text-black">₹{typeof p.price === 'number' ? p.price.toFixed(0) : Number(p.price || 0).toFixed(0)}</span>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/products/' + p.id); }}
+              className="flex-1 rounded-lg border border-black/10 bg-black/5 px-3 py-2 text-xs font-medium text-black hover:bg-black/10 transition-colors"
+            >
+              View Details
+            </button>
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="flex-1 rounded-lg bg-black px-3 py-2 text-xs font-medium text-white hover:bg-black/80 transition-colors"
+            >
+              Add to Cart
+            </button>
+          </div>
         </div>
       </div>
-      <div className="flex items-center justify-between gap-3 p-3 xl:p-3.5 2xl:p-4">
-        <div className="flex flex-col gap-1 flex-1 min-w-0">
-          <h3 className="text-2xl font-semibold truncate leading-snug text-balance">{p.name}</h3>
-          <p className="text-base text-foreground/75 truncate">{p.description ? p.description.slice(0,30) : 'Healthy & Tasty'}</p>
-        </div>
-      </div>
-    </button>
-  );
+    );
+  };
 
   return (
     <>

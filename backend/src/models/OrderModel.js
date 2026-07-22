@@ -1,56 +1,84 @@
-import { firestoreDb, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, orderBy, limit } from '../config/firebase.js';
+import { supabase } from '../lib/supabase.js';
 
 export class OrderModel {
   static getCollectionRef() {
-    return collection(firestoreDb, 'orders');
+    return 'orders';
   }
 
   static getItemsRef() {
-    return collection(firestoreDb, 'order_items');
+    return 'order_items';
   }
 
   static async getAll() {
-    const q = query(this.getCollectionRef(), orderBy('created_at', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
   }
 
   static async getById(id) {
-    const docRef = doc(firestoreDb, 'orders', id);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() };
-    }
-    return null;
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) return null;
+    return data;
   }
 
   static async getByTrackingToken(token) {
-    const q = query(this.getCollectionRef(), where('tracking_token', '==', token), limit(1));
-    const snapshot = await getDocs(q);
-    if (!snapshot.empty) {
-      const d = snapshot.docs[0];
-      return { id: d.id, ...d.data() };
-    }
-    return null;
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('tracking_token', token)
+      .single();
+
+    if (error || !data) return null;
+    return data;
   }
 
   static async create(orderData) {
-    const docRef = doc(this.getCollectionRef());
-    const payload = { ...orderData, created_at: new Date().toISOString() };
-    await setDoc(docRef, payload);
-    return { id: docRef.id, ...payload };
+    const { data: result, error } = await supabase
+      .from('orders')
+      .insert([{
+        ...orderData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return result;
   }
 
   static async update(id, data) {
-    const docRef = doc(firestoreDb, 'orders', id);
-    await updateDoc(docRef, { ...data, updated_at: new Date().toISOString() });
-    const docSnap = await getDoc(docRef);
-    return { id: docSnap.id, ...docSnap.data() };
+    const { data: result, error } = await supabase
+      .from('orders')
+      .update({
+        ...data,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return result;
   }
 
   static async getItemsByOrderId(orderId) {
-    const q = query(this.getItemsRef(), where('order_id', '==', orderId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    const { data, error } = await supabase
+      .from('order_items')
+      .select('*')
+      .eq('order_id', orderId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
   }
 }

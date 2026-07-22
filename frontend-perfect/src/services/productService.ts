@@ -1,7 +1,6 @@
 import { apiGet, apiPostAuth, apiPutAuth, apiDeleteAuth } from '../utils/api';
-import type { Product } from '../lib/firebase';
 
-const mapBackendProduct = (product: any): Product => ({
+const mapBackendProduct = (product: any): any => ({
   id: product.id,
   name: product.name,
   description: product.description || null,

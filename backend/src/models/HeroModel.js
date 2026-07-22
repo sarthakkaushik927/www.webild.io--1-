@@ -1,4 +1,4 @@
-import { realtimeRequest } from '../utils/realtimeDatabase.js';
+import { supabase } from '../lib/supabase.js';
 
 const defaultHero = {
   title: 'Swad Sang Sehat - Taste with a Twist of Health!',
@@ -14,11 +14,35 @@ const defaultHero = {
 
 export class HeroModel {
   static async getHeroContent() {
-    const hero = await realtimeRequest('hero');
-    return hero ? { ...defaultHero, ...hero } : defaultHero;
+    const { data, error } = await supabase
+      .from('cms_sections')
+      .select('*')
+      .eq('section_key', 'hero')
+      .single();
+
+    if (error || !data) return defaultHero;
+
+    return {
+      title: data.title || defaultHero.title,
+      subtitle: data.subtitle || defaultHero.subtitle,
+      images: Array.isArray(data.images) && data.images.length > 0 ? data.images : defaultHero.images,
+    };
   }
 
   static async updateHeroContent(data) {
-    return data;
+    const { data: result, error } = await supabase
+      .from('cms_sections')
+      .upsert({
+        section_key: 'hero',
+        title: data.title,
+        subtitle: data.subtitle,
+        images: data.images,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'section_key' })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return result;
   }
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Order, OrderItem } from '../lib/firebase';
+import type { Order, OrderItem } from '../lib/supabase';
 
 interface OrderDetailsModalProps {
   order: Order;
