@@ -5,7 +5,7 @@ export const uploadService = {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}${fileExt ? `.${fileExt}` : ''}`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('media')
       .upload(fileName, file, {
         contentType: file.type,

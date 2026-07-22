@@ -30,7 +30,7 @@ const defaultCraft: CraftData = {
 export default function Craft() {
   const [craftData, setCraftData] = useState<CraftData>(defaultCraft);
 
-  const { revision, bump } = useCmsRevision();
+  const { revision } = useCmsRevision();
 
   useEffect(() => {
     apiGet<{ title?: string; subtitle?: string; faqImage?: string; steps?: any[] }>('/api/craft')

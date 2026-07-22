@@ -1,6 +1,5 @@
 import { ShoppingBag } from 'lucide-react';
 import { useCartStore } from '../../stores/cartStore';
-import { useNavigate } from 'react-router-dom';
 
 export default function CartTrigger() {
   const { getTotalItems, openCart } = useCartStore();

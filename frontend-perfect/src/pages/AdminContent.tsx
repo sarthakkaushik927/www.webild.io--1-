@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet, apiPutAuth, apiPostAuth, apiDeleteAuth } from '../utils/api';
+import { apiGet, apiPutAuth } from '../utils/api';
 import { adminAuthService } from '../services/adminAuthService';
 import AdminNavbar from '../components/AdminNavbar';
 import { uploadService } from '../services/uploadService';
+import { useCmsRevision } from '../hooks/useCmsRevision';
 
 type HeroContent = {
   title: string;
@@ -216,7 +217,7 @@ export default function AdminContent() {
     return token;
   };
 
-  const { revision, bump } = useCmsRevision();
+  const { bump } = useCmsRevision();
 
   const saveAll = async () => {
     setSaving(true);
@@ -234,18 +235,6 @@ export default function AdminContent() {
       showToast(error instanceof Error ? error.message : 'Failed to save content', 'error');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleSingleUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<string | null> => {
-    const file = e.target.files?.[0];
-    if (!file) return null;
-    try {
-      const result = await uploadService.uploadImage(file);
-      return result.url;
-    } catch (err) {
-      showToast('Image upload failed', 'error');
-      return null;
     }
   };
 

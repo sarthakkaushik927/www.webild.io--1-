@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase, type Order } from '../lib/supabase';
 import { orderService } from '../services/orderService';
 
 export default function Orders() {
-  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -108,7 +107,7 @@ export default function Orders() {
     { key: 'delivered', label: 'Delivered', desc: 'Delivered to your address' },
   ];
 
-  const getStepStatus = (orderStatus: Order['status'], stepKey: string, stepIndex: number) => {
+  const getStepStatus = (orderStatus: Order['status'], _stepKey: string, stepIndex: number) => {
     if (orderStatus === 'cancelled') return 'cancelled';
     const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
     const currentIndex = statusOrder.indexOf(orderStatus);

@@ -96,11 +96,6 @@ export default function AdminFeaturesPage() {
   const [stepDesc, setStepDesc] = useState('');
   const [stepImage, setStepImage] = useState('');
 
-  const [faqModalOpen, setFaqModalOpen] = useState(false);
-  const [editingFaqIdx, setEditingFaqIdx] = useState<number | null>(null);
-  const [faqQuestion, setFaqQuestion] = useState('');
-  const [faqAnswer, setFaqAnswer] = useState('');
-
   useEffect(() => {
     if (!adminAuthService.isAuthenticated()) {
       navigate('/admin');

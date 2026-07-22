@@ -1,5 +1,6 @@
-import { supabase, type Profile, type Category, type Product, type Order } from '../lib/supabase';
+import { supabase, type Profile } from '../lib/supabase';
 import { adminAuthService } from './adminAuthService';
+import { apiDeleteAuth } from '../utils/api';
 
 type BackendProduct = {
   id: string;

@@ -1,5 +1,4 @@
 import { apiGet, apiPut, apiPostAuth, apiPutAuth, apiDeleteAuth } from '../utils/api';
-import { supabase } from '../lib/supabase';
 
 export interface SiteSettings {
   whatsapp_number: string;

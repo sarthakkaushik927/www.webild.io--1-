@@ -4,10 +4,10 @@ import { productService } from '../services/firebaseService';
 
 import type { Product } from '../lib/supabase';
 const fallbackProducts: Product[] = [
-  { id: 'f1', name: 'Banana Chips', description: 'Fresh & Crunchy Snack!', price: 120, image_url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-1.webp', is_available: true, tags: [], created_at: new Date(), category_id: null },
-  { id: 'f2', name: 'Chana', description: 'Nutritious & Tasty!', price: 100, image_url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-2.webp', is_available: true, tags: [], created_at: new Date(), category_id: null },
-  { id: 'f3', name: 'Peri Peri Makhana', description: 'Power-Packed Nutrition!', price: 180, image_url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-3.webp', is_available: true, tags: [], created_at: new Date(), category_id: null },
-  { id: 'f4', name: 'Classic Cashews', description: 'Delicious & Crunchy!', price: 350, image_url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-4.webp', is_available: true, tags: [], created_at: new Date(), category_id: null }
+  { id: 'f1', name: 'Banana Chips', description: 'Fresh & Crunchy Snack!', price: 120, image_url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-1.webp', is_available: true, tags: [], created_at: new Date().toISOString(), category_id: null, display_order: 1, updated_at: new Date().toISOString() },
+  { id: 'f2', name: 'Chana', description: 'Nutritious & Tasty!', price: 100, image_url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-2.webp', is_available: true, tags: [], created_at: new Date().toISOString(), category_id: null, display_order: 2, updated_at: new Date().toISOString() },
+  { id: 'f3', name: 'Peri Peri Makhana', description: 'Power-Packed Nutrition!', price: 180, image_url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-3.webp', is_available: true, tags: [], created_at: new Date().toISOString(), category_id: null, display_order: 3, updated_at: new Date().toISOString() },
+  { id: 'f4', name: 'Classic Cashews', description: 'Delicious & Crunchy!', price: 350, image_url: 'https://storage.googleapis.com/webild/default/templates/skincare-luxury/product-4.webp', is_available: true, tags: [], created_at: new Date().toISOString(), category_id: null, display_order: 4, updated_at: new Date().toISOString() }
 ];
 
 export default function Collection() {
